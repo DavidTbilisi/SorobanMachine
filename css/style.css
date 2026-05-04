@@ -1,0 +1,175 @@
+*, *::before, *::after { box-sizing: border-box; }
+
+body {
+  font-family: monospace;
+  font-size: 14px;
+  max-width: 1100px;
+  margin: 24px auto;
+  padding: 0 16px;
+  background: #f4f4f4;
+  color: #111;
+}
+
+h1 { font-size: 1.4rem; margin-bottom: 12px; }
+hr { border: none; border-top: 1px solid #ccc; margin: 16px 0; }
+
+/* ── Selectors ──────────────────────────────────────────────────────────────── */
+
+.selectors-row { display: flex; gap: 16px; flex-wrap: wrap; align-items: flex-start; }
+
+fieldset {
+  border: 1px solid #999;
+  padding: 8px 12px;
+  margin-bottom: 0;
+  min-width: 240px;
+}
+legend { font-weight: bold; padding: 0 4px; }
+
+.skill-label {
+  display: block;
+  margin: 2px 0;
+  line-height: 1.7;
+  cursor: pointer;
+}
+.skill-unavailable { opacity: 0.55; cursor: default; }
+.skill-meta { color: #666; font-size: 12px; }
+
+/* ── Exercise panel ─────────────────────────────────────────────────────────── */
+
+.exercise-meta { margin: 0 0 4px; color: #555; font-size: 12px; }
+
+.prompt {
+  font-size: 2rem;
+  font-weight: bold;
+  letter-spacing: 0.06em;
+  margin: 8px 0 12px;
+}
+
+input[type="text"] {
+  font-family: monospace;
+  font-size: 1.2rem;
+  padding: 5px 10px;
+  width: 130px;
+  margin-right: 6px;
+  border: 1px solid #aaa;
+}
+
+button {
+  padding: 5px 14px;
+  margin: 0 6px 0 0;
+  font-family: monospace;
+  cursor: pointer;
+  border: 1px solid #888;
+  background: #eee;
+}
+button:hover:not(:disabled) { background: #ddd; }
+button:disabled { opacity: 0.45; cursor: default; }
+
+/* ── Soroban SVG ────────────────────────────────────────────────────────────── */
+
+#soroban-state { margin: 12px 0; }
+
+.soroban-cols {
+  display: flex;
+  gap: 32px;
+  align-items: flex-start;
+}
+
+.soroban-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.soroban-col-label {
+  font-size: 12px;
+  color: #555;
+  font-weight: bold;
+  text-align: center;
+}
+
+.soroban-svg { display: block; }
+
+.soroban-placeholder {
+  width: 70px;
+}
+.soroban-placeholder-box {
+  width: 70px;
+  height: 220px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px dashed #ccc;
+  font-size: 2rem;
+  color: #bbb;
+}
+
+/* ── Rule hint ──────────────────────────────────────────────────────────────── */
+
+#hints {
+  display: inline-block;
+  margin: 6px 0;
+  padding: 5px 12px;
+  background: #fffde7;
+  border: 1px solid #f0c030;
+  border-radius: 3px;
+}
+
+/* ── Feedback ───────────────────────────────────────────────────────────────── */
+
+#feedback {
+  margin: 10px 0;
+  padding: 10px 14px;
+  border: 2px solid #aaa;
+  background: #fff;
+  border-radius: 3px;
+}
+#feedback.correct   { border-color: #38a169; background: #f0fff4; }
+#feedback.incorrect { border-color: #e53e3e; background: #fff5f5; }
+#feedback ol { margin: 6px 0 0; padding-left: 20px; }
+#feedback hr { margin: 8px 0; border-color: #ddd; }
+.note { margin: 4px 0; color: #744210; font-style: italic; }
+
+/* ── Provisional notice ─────────────────────────────────────────────────────── */
+
+.notice-provisional {
+  margin: 8px 0;
+  padding: 8px 14px;
+  background: #ebf8ff;
+  border: 1px solid #3182ce;
+  border-radius: 3px;
+  color: #2b4c7e;
+}
+
+/* ── Dashboard table ────────────────────────────────────────────────────────── */
+
+table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 8px 0;
+  font-size: 13px;
+}
+th, td {
+  border: 1px solid #ccc;
+  padding: 4px 8px;
+  vertical-align: top;
+  text-align: left;
+}
+thead th { background: #e8e8e8; font-weight: bold; }
+
+.dashboard-table .gate-cell { font-size: 12px; }
+
+.pass  { color: #276749; }
+.fail  { color: #c53030; }
+
+.row-locked      { color: #888; }
+.row-mastered    { background: #f0fff4; }
+.row-provisional { background: #ebf8ff; }
+.row-rusty       { background: #fffaf0; color: #744210; }
+.row-incorrect   { background: #fff5f5; }
+
+/* ── Misc ───────────────────────────────────────────────────────────────────── */
+
+details { margin: 4px 0; }
+summary { cursor: pointer; padding: 4px 0; user-select: none; }
