@@ -24,12 +24,17 @@ export function keyToOperationToken(key) {
   return SHORTCUT_MAP[key.toLowerCase()] ?? null;
 }
 
+const COL_PREFIX = ['', 'T', 'H'];  // col 0 = ones (no prefix), col 1 = tens, col 2 = hundreds
+
 /**
- * @param {{ direction: string, amount: number }} token
- * @returns {string}  e.g. "+5" or "−2"
+ * @param {{ col?: number, direction: string, amount: number }} token
+ * @returns {string}  e.g. "+5", "−2", "T+1"
  */
 export function operationTokenToLabel(token) {
-  return `${token.direction === 'add' ? '+' : '−'}${token.amount}`;
+  const col    = token.col ?? 0;
+  const prefix = col > 0 ? (COL_PREFIX[col] ?? `C${col}`) : '';
+  const sign   = token.direction === 'add' ? '+' : '−';
+  return `${prefix}${sign}${token.amount}`;
 }
 
 /** @param {Array} sequence @returns {string[]} */
@@ -43,5 +48,9 @@ export function sequenceToLabels(sequence) {
  */
 export function sequencesEqual(a, b) {
   if (!a || !b || a.length !== b.length) return false;
-  return a.every((t, i) => t.direction === b[i].direction && t.amount === b[i].amount);
+  return a.every((t, i) =>
+    t.direction === b[i].direction &&
+    t.amount    === b[i].amount &&
+    (t.col ?? 0) === (b[i].col ?? 0)
+  );
 }

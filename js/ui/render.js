@@ -10,10 +10,10 @@ import {
   dashboardHTML,
   attemptLogHTML,
   provisionalNoticeHTML,
-  sequencePanelHTML,
 } from './views.js';
 import { applyOperation } from '../engine/operations.js';
-import { SKILL_IDS } from '../config.js';
+import { applyMultiColumnOperation } from '../engine/multicolumn.js';
+import { sequenceToLabels } from '../keyboard/shortcuts.js';
 
 /** Full re-render. Used on init and reset. */
 export function renderApp(state) {
@@ -27,9 +27,10 @@ export function renderApp(state) {
 
 /** Re-renders the full exercise area (panel + soroban + hints + sequence + feedback). */
 export function renderExercise(state) {
+  const numCols = state.currentExercise?.numCols ?? 1;
   set('exercise-container',  exercisePanelHTML(state));
-  set('soroban-container',   sorobanStateHTML(state.currentExercise, state.lastAttempt, state.supportLevel));
-  set('legend-container',    keyboardLegendHTML(state.inputMode, state.supportLevel, state.hintsVisible));
+  set('soroban-container',   sorobanStateHTML(state.currentExercise, state.lastAttempt, state.supportLevel, state.focusedCol));
+  set('legend-container',    keyboardLegendHTML(state.inputMode, state.supportLevel, state.hintsVisible, numCols));
   set('hints-container',     hintsHTML(state.currentExercise, state.supportLevel, state.hintsVisible));
   renderFeedback(state);
   set('provisional-container', provisionalNoticeHTML(state.selectedSkillId, state.progress));
@@ -39,45 +40,37 @@ export function renderExercise(state) {
 /** Re-renders only after a submit (disable input, reveal After bead, show feedback). */
 export function renderAfterSubmit(state) {
   set('exercise-container', exercisePanelHTML(state));
-  set('soroban-container',  sorobanStateHTML(state.currentExercise, state.lastAttempt, state.supportLevel));
+  set('soroban-container',  sorobanStateHTML(state.currentExercise, state.lastAttempt, state.supportLevel, state.focusedCol));
   renderFeedback(state);
   set('provisional-container', provisionalNoticeHTML(state.selectedSkillId, state.progress));
 }
 
+/** Targeted re-render of just the soroban column focus indicator. */
+export function renderFocusedCol(state) {
+  set('soroban-container', sorobanStateHTML(state.currentExercise, state.lastAttempt, state.supportLevel, state.focusedCol));
+}
+
 /** Targeted update of the sequence chip display only (called on every token press). */
 export function renderSequencePanel(state) {
-  const isMental = state.currentExercise?.skillId === SKILL_IDS.MENTAL_ONLY || state.supportLevel === 3;
+  const labels = sequenceToLabels(state.inputSequence);
+  const chips = labels.length
+    ? labels.map(l => `<span class="token-chip">${l}</span>`).join(' ')
+    : '<span class="seq-empty">—</span>';
 
-  // In reflex mode the sequence lives inside #sequence-live (inside exercise-container)
   const liveEl = document.getElementById('sequence-live');
-  if (liveEl) {
-    const { sequenceToLabels } = require_sequenceToLabels(); // avoid circular; inline:
-    import('../keyboard/shortcuts.js').then(({ sequenceToLabels }) => {
-      const labels = sequenceToLabels(state.inputSequence);
-      liveEl.innerHTML = labels.length
-        ? labels.map(l => `<span class="token-chip">${l}</span>`).join(' ')
-        : '<span class="seq-empty">—</span>';
-    });
-  }
+  if (liveEl) liveEl.innerHTML = chips;
 
-  // In command mode the sequence lives in .sequence-built (also inside exercise-container)
   const builtEl = document.querySelector('.sequence-built');
-  if (builtEl) {
-    import('../keyboard/shortcuts.js').then(({ sequenceToLabels }) => {
-      const labels = sequenceToLabels(state.inputSequence);
-      const chips = labels.length
-        ? labels.map(l => `<span class="token-chip">${l}</span>`).join(' ')
-        : '<span class="seq-empty">—</span>';
-      builtEl.innerHTML = `<span class="seq-label">Sequence:</span> ${chips}`;
-    });
-  }
+  if (builtEl) builtEl.innerHTML = `<span class="seq-label">Sequence:</span> ${chips}`;
 }
 
 export function renderFeedback(state) {
   let transition = null;
   if (state.lastAttempt && state.currentExercise && state.supportLevel < 3) {
-    const { startValue, direction, amount } = state.currentExercise;
-    transition = applyOperation(startValue, direction, amount);
+    const { startValue, direction, amount, numCols } = state.currentExercise;
+    transition = (numCols ?? 1) > 1
+      ? applyMultiColumnOperation(startValue, direction, amount)
+      : applyOperation(startValue, direction, amount);
   }
   set('feedback-container', feedbackHTML(state.lastAttempt, transition, state.supportLevel));
 }

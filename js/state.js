@@ -12,8 +12,9 @@ export function createInitialAppState() {
     progress:         createInitialProgress(),
     attemptLog:       [],
     inputMode:        'command',  // 'command' | 'reflex'
-    inputSequence:    [],          // current token sequence being built
-    hintsVisible:     true,        // toggled by H key
+    inputSequence:    [],         // current token sequence being built
+    hintsVisible:     true,       // toggled by H key
+    focusedCol:       0,          // which rod the shortcut keys operate on (0=ones)
   };
 }
 

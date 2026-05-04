@@ -124,45 +124,91 @@ function sorobanSVG(value) {
   </svg>`;
 }
 
-export function sorobanStateHTML(exercise, lastAttempt, supportLevel) {
+export function sorobanStateHTML(exercise, lastAttempt, supportLevel, focusedCol = 0) {
   if (!exercise || supportLevel === 3) return '';
-  const before = exercise.startValue;
-  const afterRaw = exercise.expectedResult;
-  const afterDigit = ((afterRaw % 10) + 10) % 10;
-  const carryNeeded  = afterRaw >= 10;
-  const borrowNeeded = afterRaw < 0;
   const showAfter = !!lastAttempt;
+  const numCols   = exercise.numCols ?? 1;
 
-  let afterLabel = 'After';
-  if (carryNeeded)  afterLabel += ' + carry';
-  if (borrowNeeded) afterLabel += ' + borrow';
+  if (numCols === 1) {
+    const before   = exercise.startValue;
+    const afterRaw = exercise.expectedResult;
+    const afterDigit = ((afterRaw % 10) + 10) % 10;
+    const carryNeeded  = afterRaw >= 10;
+    const borrowNeeded = afterRaw < 0;
+    let afterLabel = 'After';
+    if (carryNeeded)  afterLabel += ' + carry';
+    if (borrowNeeded) afterLabel += ' + borrow';
 
-  return `<div id="soroban-state">
-    <div class="soroban-cols">
-      <div class="soroban-col">
-        <div class="soroban-col-label">Before</div>
-        ${sorobanSVG(before)}
+    return `<div id="soroban-state">
+      <div class="soroban-cols">
+        <div class="soroban-col">
+          <div class="soroban-col-label">Before</div>
+          ${sorobanSVG(before)}
+        </div>
+        ${showAfter
+          ? `<div class="soroban-col">
+               <div class="soroban-col-label">${afterLabel}</div>
+               ${sorobanSVG(afterDigit)}
+             </div>`
+          : `<div class="soroban-col soroban-placeholder">
+               <div class="soroban-col-label">After</div>
+               <div class="soroban-placeholder-box">?</div>
+             </div>`}
       </div>
-      ${showAfter
-        ? `<div class="soroban-col">
-             <div class="soroban-col-label">${afterLabel}</div>
-             ${sorobanSVG(afterDigit)}
-           </div>`
-        : `<div class="soroban-col soroban-placeholder">
-             <div class="soroban-col-label">After</div>
-             <div class="soroban-placeholder-box">?</div>
-           </div>`}
+    </div>`;
+  }
+
+  // ── Multi-column (2 rods) ──────────────────────────────────────────────────
+  const COL_NAMES = ['Ones', 'Tens', 'Hundreds'];
+
+  function extractDigit(value, col) {
+    return Math.floor(Math.abs(value) / Math.pow(10, col)) % 10;
+  }
+
+  // Display order: highest-order rod on left (e.g. col 1 then col 0)
+  const displayOrder = Array.from({ length: numCols }, (_, i) => numCols - 1 - i);
+
+  function rodGroup(value, showFocus) {
+    return displayOrder.map(col => {
+      const focused = showFocus && col === focusedCol;
+      return `<div class="soroban-col${focused ? ' soroban-focused' : ''}">
+        <div class="soroban-col-label">${COL_NAMES[col] ?? `Col ${col}`}${focused ? ' ◀' : ''}</div>
+        ${sorobanSVG(extractDigit(value, col))}
+      </div>`;
+    }).join('\n');
+  }
+
+  const label = exercise.direction === 'add' ? 'After + carry' : 'After + borrow';
+
+  return `<div id="soroban-state" class="multi-col">
+    <div class="soroban-group">
+      <div class="soroban-group-label">Before</div>
+      <div class="soroban-cols">${rodGroup(exercise.startValue, !showAfter)}</div>
+    </div>
+    <div class="soroban-group">
+      <div class="soroban-group-label">${showAfter ? label : 'After'}</div>
+      <div class="soroban-cols">
+        ${showAfter
+          ? rodGroup(exercise.expectedResult, false)
+          : displayOrder.map(() => `<div class="soroban-col soroban-placeholder">
+              <div class="soroban-col-label">?</div>
+              <div class="soroban-placeholder-box">?</div>
+            </div>`).join('\n')}
+      </div>
     </div>
   </div>`;
 }
 
 // ── Keyboard legend ───────────────────────────────────────────────────────────
 
-export function keyboardLegendHTML(inputMode, supportLevel, hintsVisible) {
+export function keyboardLegendHTML(inputMode, supportLevel, hintsVisible, numCols = 1) {
   if (supportLevel === 3 || !hintsVisible) return '';
   const addKeys  = [['J','+1'],['K','+2'],['L','+3'],[';','+4'],['U','+5'],['I','+10']];
   const subKeys  = [['F','−1'],['D','−2'],['S','−3'],['A','−4'],['R','−5'],['E','−10']];
   const mkKey = ([k, v]) => `<span class="legend-key"><kbd>${k}</kbd><span>${v}</span></span>`;
+  const colNav = numCols > 1
+    ? `<div class="legend-row legend-controls"><kbd>[</kbd> col left &nbsp; <kbd>]</kbd> col right</div>`
+    : '';
   return `<div class="keyboard-legend">
     <div class="legend-row">
       <strong>Add:</strong> ${addKeys.map(mkKey).join('')}
@@ -170,6 +216,7 @@ export function keyboardLegendHTML(inputMode, supportLevel, hintsVisible) {
     <div class="legend-row">
       <strong>Sub:</strong> ${subKeys.map(mkKey).join('')}
     </div>
+    ${colNav}
     <div class="legend-row legend-controls">
       <kbd>Enter</kbd> submit &nbsp;
       <kbd>Space</kbd> next &nbsp;

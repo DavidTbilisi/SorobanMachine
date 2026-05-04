@@ -68,10 +68,14 @@ button:disabled { opacity: 0.45; cursor: default; }
 /* ── Soroban SVG ────────────────────────────────────────────────────────────── */
 
 #soroban-state { margin: 12px 0; }
+#soroban-state.multi-col { display: flex; gap: 32px; align-items: flex-start; }
+
+.soroban-group { display: flex; flex-direction: column; gap: 4px; }
+.soroban-group-label { font-size: 12px; font-weight: bold; color: #555; }
 
 .soroban-cols {
   display: flex;
-  gap: 32px;
+  gap: 16px;
   align-items: flex-start;
 }
 
@@ -90,6 +94,13 @@ button:disabled { opacity: 0.45; cursor: default; }
 }
 
 .soroban-svg { display: block; }
+
+.soroban-focused {
+  outline: 2px solid #3182ce;
+  border-radius: 4px;
+  background: #ebf8ff;
+  padding: 4px;
+}
 
 .soroban-placeholder {
   width: 70px;
@@ -168,6 +179,97 @@ thead th { background: #e8e8e8; font-weight: bold; }
 .row-provisional { background: #ebf8ff; }
 .row-rusty       { background: #fffaf0; color: #744210; }
 .row-incorrect   { background: #fff5f5; }
+
+/* ── Keyboard legend ────────────────────────────────────────────────────────── */
+
+.keyboard-legend {
+  display: inline-block;
+  margin: 6px 0 10px;
+  padding: 8px 12px;
+  background: #f9f9f9;
+  border: 1px solid #ccc;
+  border-radius: 3px;
+  font-size: 12px;
+}
+
+.legend-row { margin-bottom: 4px; }
+.legend-row:last-child { margin-bottom: 0; }
+
+.legend-key {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  margin-right: 6px;
+}
+
+kbd {
+  display: inline-block;
+  padding: 1px 5px;
+  border: 1px solid #999;
+  border-radius: 3px;
+  background: #eee;
+  font-family: monospace;
+  font-size: 11px;
+}
+
+.legend-controls kbd { margin-right: 2px; }
+
+/* ── Sequence display ───────────────────────────────────────────────────────── */
+
+.token-chip {
+  display: inline-block;
+  padding: 2px 7px;
+  border: 1px solid #999;
+  border-radius: 3px;
+  background: #e8f0fe;
+  font-size: 13px;
+  margin: 1px 2px;
+}
+
+.token-chip.correct   { background: #f0fff4; border-color: #38a169; color: #276749; }
+.token-chip.incorrect { background: #fff5f5; border-color: #e53e3e; color: #c53030; }
+
+.seq-empty { color: #aaa; font-style: italic; }
+.seq-label { font-weight: bold; color: #555; margin-right: 4px; }
+
+.reflex-sequence {
+  min-height: 34px;
+  padding: 5px 10px;
+  border: 1px solid #aaa;
+  border-radius: 3px;
+  background: #fafafa;
+  display: inline-block;
+  min-width: 130px;
+  margin-bottom: 8px;
+}
+
+.sequence-built {
+  margin: 4px 0 8px;
+  padding: 4px 0;
+}
+
+/* ── Sequence feedback table ────────────────────────────────────────────────── */
+
+.seq-table {
+  width: auto;
+  margin: 6px 0 0;
+  font-size: 13px;
+}
+
+.seq-table th, .seq-table td {
+  padding: 3px 10px;
+  text-align: center;
+}
+
+/* ── Button row ─────────────────────────────────────────────────────────────── */
+
+.btn-row {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  margin-top: 8px;
+  flex-wrap: wrap;
+}
 
 /* ── Misc ───────────────────────────────────────────────────────────────────── */
 

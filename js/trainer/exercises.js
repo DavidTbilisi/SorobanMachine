@@ -32,6 +32,8 @@ export function generateExercise(skillId) {
     case SKILL_IDS.FIVE_COMPLEMENT_SUBTRACT: return genFiveCompSubtract(id, skillId);
     case SKILL_IDS.TEN_COMPLEMENT_ADD:       return genTenCompAdd(id, skillId);
     case SKILL_IDS.TEN_COMPLEMENT_SUBTRACT:  return genTenCompSubtract(id, skillId);
+    case SKILL_IDS.CARRY:                    return genCarry(id, skillId);
+    case SKILL_IDS.BORROW:                   return genBorrow(id, skillId);
     case SKILL_IDS.MENTAL_ONLY:              return genMentalOnly(id, skillId);
     default:
       throw new Error(`Exercises for "${skillId}" are not yet implemented.`);
@@ -100,6 +102,40 @@ function genTenCompSubtract(id, skillId) {
       if (c - a < 0) candidates.push([c, a]);
   const [c, a] = pick(candidates);
   return makeExercise(id, skillId, c, 'subtract', a);
+}
+
+function genCarry(id, skillId) {
+  const candidates = [];
+  for (let tens = 1; tens <= 8; tens++)
+    for (let ones = 1; ones <= 9; ones++)
+      for (let a = 5; a <= 9; a++)
+        if (ones + a >= 10) candidates.push([tens, ones, a]);
+  const [t, c, a] = pick(candidates);
+  const startValue = t * 10 + c;
+  return {
+    id, skillId, numCols: 2,
+    startValue, direction: 'add', amount: a,
+    prompt: `${startValue} + ${a} = ?`,
+    expectedRule: detectRule(c, 'add', a),
+    expectedResult: startValue + a,
+  };
+}
+
+function genBorrow(id, skillId) {
+  const candidates = [];
+  for (let tens = 1; tens <= 9; tens++)
+    for (let ones = 0; ones <= 9; ones++)
+      for (let a = 5; a <= 9; a++)
+        if (ones - a < 0) candidates.push([tens, ones, a]);
+  const [t, c, a] = pick(candidates);
+  const startValue = t * 10 + c;
+  return {
+    id, skillId, numCols: 2,
+    startValue, direction: 'subtract', amount: a,
+    prompt: `${startValue} − ${a} = ?`,
+    expectedRule: detectRule(c, 'subtract', a),
+    expectedResult: startValue - a,
+  };
 }
 
 function genMentalOnly(id, skillId) {
