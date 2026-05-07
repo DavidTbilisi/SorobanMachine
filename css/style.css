@@ -32,6 +32,7 @@ legend { font-weight: bold; padding: 0 4px; }
   cursor: pointer;
 }
 .skill-unavailable { opacity: 0.55; cursor: default; }
+.skill-recommended .skill-meta { color: #8a6d3b; }
 .skill-meta { color: #666; font-size: 12px; }
 
 /* ── Exercise panel ─────────────────────────────────────────────────────────── */

@@ -2,7 +2,7 @@ import { createInitialAppState, resetAppState } from './state.js';
 import { loadAppState, saveAppState, clearAppState } from './storage.js';
 import { generateExercise } from './trainer/exercises.js';
 import { evaluateAnswerNumeric, evaluateAnswerSequence } from './trainer/scoring.js';
-import { updateProgress, unlockEligibleSkills, applyRustyDecay } from './trainer/progress.js';
+import { updateProgress, unlockEligibleSkills, applyRustyDecay, migrateLockedToLearning } from './trainer/progress.js';
 import { canMasterSkill } from './trainer/gates.js';
 import { STATUS, PROVISIONAL_HOLD_MS, SKILL_IDS } from './config.js';
 import { applyOperation } from './engine/operations.js';
@@ -21,6 +21,7 @@ state.inputSequence ??= [];
 state.hintsVisible  ??= true;
 state.focusedCol    ??= 0;
 
+state.progress = migrateLockedToLearning(state.progress);
 state.progress = applyRustyDecay(state.progress);
 
 // ── Status transitions ────────────────────────────────────────────────────────

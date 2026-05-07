@@ -1,5 +1,5 @@
 import { STATUS, SUPPORT_LABELS, LICENSE, SKILL_IDS } from '../config.js';
-import { getAllSkills, getLockedReason } from '../trainer/skills.js';
+import { getAllSkills, getRecommendationHint } from '../trainer/skills.js';
 import { getMasteryBlockers } from '../trainer/gates.js';
 import { operationTokenToLabel, sequenceToLabels } from '../keyboard/shortcuts.js';
 
@@ -10,13 +10,12 @@ export function skillSelectorHTML(progress, selectedSkillId) {
     <legend>Skill</legend>
     ${getAllSkills().map(skill => {
       const p = progress[skill.id];
-      const locked = p.status === STATUS.LOCKED;
-      const unavailable = locked || !skill.implemented;
-      const reason = locked
-        ? getLockedReason(skill.id, progress)
-        : !skill.implemented ? 'coming soon' : '';
+      const unavailable = !skill.implemented;
+      const recommendation = skill.implemented ? getRecommendationHint(skill.id, progress) : null;
+      const reason = !skill.implemented ? 'coming soon' : (recommendation ?? '');
       const badge = p.status === STATUS.MASTERED ? ' ✓' : p.status === STATUS.PROVISIONAL ? ' ◑' : '';
-      return `<label class="skill-label ${unavailable ? 'skill-unavailable' : ''}">
+      const labelClass = unavailable ? 'skill-unavailable' : recommendation ? 'skill-recommended' : '';
+      return `<label class="skill-label ${labelClass}">
         <input type="radio" name="skill" value="${skill.id}"
           ${skill.id === selectedSkillId ? 'checked' : ''}
           ${unavailable ? 'disabled' : ''}>

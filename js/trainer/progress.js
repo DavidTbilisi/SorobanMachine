@@ -1,5 +1,4 @@
 import { STATUS, SKILL_IDS, RUSTY_THRESHOLD_MS } from '../config.js';
-import { isSkillUnlocked } from './skills.js';
 
 /** @returns {Object} initial progress keyed by skillId */
 export function createInitialProgress() {
@@ -7,9 +6,7 @@ export function createInitialProgress() {
   for (const id of Object.values(SKILL_IDS)) {
     progress[id] = {
       skillId: id,
-      status: (id === SKILL_IDS.DIRECT_ADD || id === SKILL_IDS.DIRECT_SUBTRACT)
-        ? STATUS.LEARNING
-        : STATUS.LOCKED,
+      status: STATUS.LEARNING,
       attempts: 0,
       correct: 0,
       accuracy: 0,
@@ -20,6 +17,22 @@ export function createInitialProgress() {
     };
   }
   return progress;
+}
+
+/**
+ * Migrates any legacy LOCKED skill in saved progress to LEARNING.
+ * Skills are no longer hard-gated by prerequisites — sequence is a recommendation.
+ * @param {Object} progress
+ * @returns {Object}
+ */
+export function migrateLockedToLearning(progress) {
+  const updated = { ...progress };
+  for (const id of Object.keys(updated)) {
+    if (updated[id]?.status === STATUS.LOCKED) {
+      updated[id] = { ...updated[id], status: STATUS.LEARNING };
+    }
+  }
+  return updated;
 }
 
 /**
@@ -75,18 +88,13 @@ export function recalculateSkillProgress(skillId, attempts) {
 }
 
 /**
- * Unlocks (→ LEARNING) any LOCKED skill whose prerequisites are all mastered.
+ * No-op kept for call-site compatibility. Skills are no longer hard-locked by
+ * prerequisites; the sequence is surfaced as a recommendation instead.
  * @param {Object} progress
  * @returns {Object}
  */
 export function unlockEligibleSkills(progress) {
-  const updated = { ...progress };
-  for (const id of Object.values(SKILL_IDS)) {
-    if (updated[id].status === STATUS.LOCKED && isSkillUnlocked(id, updated)) {
-      updated[id] = { ...updated[id], status: STATUS.LEARNING };
-    }
-  }
-  return updated;
+  return progress;
 }
 
 /**

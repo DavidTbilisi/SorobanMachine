@@ -26,16 +26,18 @@ export function getAllSkills() {
 }
 
 export function getUnlockedSkills(progress) {
-  return SKILL_TREE.filter(s => isSkillUnlocked(s.id, progress));
+  return SKILL_TREE.filter(s => arePrerequisitesMastered(s.id, progress));
 }
 
 /**
- * A skill is unlocked when all prerequisites are mastered.
+ * True when all of this skill's prerequisites are mastered.
+ * Used to flag whether following the recommended sequence is satisfied —
+ * NOT to block selection.
  * @param {string} skillId
  * @param {Object} progress
  * @returns {boolean}
  */
-export function isSkillUnlocked(skillId, progress) {
+export function arePrerequisitesMastered(skillId, progress) {
   const skill = SKILL_TREE.find(s => s.id === skillId);
   if (!skill) return false;
   return skill.prerequisites.every(id => progress[id]?.status === STATUS.MASTERED);
@@ -47,15 +49,17 @@ export function isSkillImplemented(skillId) {
 }
 
 /**
+ * Returns a recommendation hint when prerequisites aren't all mastered, else null.
+ * The skill is still selectable — this is advisory.
  * @param {string} skillId
  * @param {Object} progress
  * @returns {string|null}
  */
-export function getLockedReason(skillId, progress) {
+export function getRecommendationHint(skillId, progress) {
   const skill = SKILL_TREE.find(s => s.id === skillId);
-  if (!skill) return 'Unknown skill.';
+  if (!skill) return null;
   const unmet = skill.prerequisites.filter(id => progress[id]?.status !== STATUS.MASTERED);
   if (!unmet.length) return null;
   const labels = unmet.map(id => SKILL_TREE.find(s => s.id === id)?.label ?? id);
-  return `Requires mastery of: ${labels.join(', ')}.`;
+  return `Recommended: master ${labels.join(', ')} first for best results.`;
 }
