@@ -199,6 +199,67 @@ export function sorobanStateHTML(exercise, lastAttempt, supportLevel, focusedCol
   </div>`;
 }
 
+// ── 10×10 number grid (operand visualization) ────────────────────────────────
+
+/**
+ * 10×10 dot grid showing the two operands of the current exercise:
+ * A (startValue) in gold from row 0; B (amount) in purple starting on the
+ * first row not occupied by A. Hidden for mental skills, support level 3,
+ * and chain exercises (still_hands).
+ */
+export function numberGridHTML(exercise, supportLevel) {
+  if (!exercise || supportLevel === 3 || isMentalOnlySkill(exercise.skillId)) return '';
+  if (exercise.ops) return '';
+  const { startValue, amount, direction } = exercise;
+  if (typeof startValue !== 'number' || typeof amount !== 'number') return '';
+
+  const CELL = 18, GAP = 2, COLS = 10, ROWS = 10;
+  const PAD = 2;
+  const W = COLS * (CELL + GAP) - GAP + PAD * 2;
+  const H = ROWS * (CELL + GAP) - GAP + PAD * 2;
+
+  const A_FILL = '#ecc94b', A_STROKE = '#b7791f';
+  const B_FILL = '#9f7aea', B_STROKE = '#553c9a';
+  const EMPTY_STROKE = '#cbd5e0';
+
+  const aCount = Math.max(0, Math.min(100, startValue));
+  const aRows  = aCount === 0 ? 0 : Math.ceil(aCount / 10);
+  const bStart = aRows * 10;
+  const bCount = Math.max(0, Math.min(amount, 100 - bStart));
+
+  const cells = [];
+  for (let i = 0; i < COLS * ROWS; i++) {
+    const r = Math.floor(i / COLS);
+    const c = i % COLS;
+    const cx = c * (CELL + GAP) + CELL / 2 + PAD;
+    const cy = r * (CELL + GAP) + CELL / 2 + PAD;
+    const radius = CELL / 2 - 2;
+    let fill, stroke;
+    if (i < aCount) {
+      fill = A_FILL; stroke = A_STROKE;
+    } else if (i >= bStart && i < bStart + bCount) {
+      fill = B_FILL; stroke = B_STROKE;
+    } else {
+      fill = 'none'; stroke = EMPTY_STROKE;
+    }
+    cells.push(`<circle cx="${cx}" cy="${cy}" r="${radius}" fill="${fill}" stroke="${stroke}" stroke-width="1.5"/>`);
+  }
+
+  // 5/5 vertical divider for easy counting
+  const dividerX = 5 * (CELL + GAP) - GAP / 2 + PAD;
+  cells.push(`<line x1="${dividerX}" y1="${PAD}" x2="${dividerX}" y2="${H - PAD}" stroke="#718096" stroke-width="1.5"/>`);
+
+  const sign = direction === 'add' ? '+' : '−';
+  return `<div class="number-grid">
+    <div class="grid-label">${startValue} ${sign} ${amount}</div>
+    <svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">${cells.join('')}</svg>
+    <div class="grid-legend">
+      <span class="grid-key"><span class="grid-dot grid-dot-a"></span> A = ${startValue}</span>
+      <span class="grid-key"><span class="grid-dot grid-dot-b"></span> B = ${amount}</span>
+    </div>
+  </div>`;
+}
+
 // ── Keyboard legend ───────────────────────────────────────────────────────────
 
 export function keyboardLegendHTML(inputMode, supportLevel, hintsVisible, numCols = 1, skillId = null) {

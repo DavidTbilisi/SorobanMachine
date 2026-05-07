@@ -4,6 +4,7 @@ import {
   modeSelectorHTML,
   exercisePanelHTML,
   sorobanStateHTML,
+  numberGridHTML,
   keyboardLegendHTML,
   hintsHTML,
   feedbackHTML,
@@ -30,6 +31,7 @@ export function renderApp(state) {
 export function renderExercise(state) {
   const numCols = state.currentExercise?.numCols ?? 1;
   set('exercise-container',  exercisePanelHTML(state));
+  set('grid-container',      numberGridHTML(state.currentExercise, state.supportLevel));
   set('soroban-container',   sorobanStateHTML(state.currentExercise, state.lastAttempt, state.supportLevel, state.focusedCol));
   set('legend-container',    keyboardLegendHTML(state.inputMode, state.supportLevel, state.hintsVisible, numCols, state.currentExercise?.skillId));
   set('hints-container',     hintsHTML(state.currentExercise, state.supportLevel, state.hintsVisible));
@@ -41,6 +43,7 @@ export function renderExercise(state) {
 /** Re-renders only after a submit (disable input, reveal After bead, show feedback). */
 export function renderAfterSubmit(state) {
   set('exercise-container', exercisePanelHTML(state));
+  set('grid-container',     numberGridHTML(state.currentExercise, state.supportLevel));
   set('soroban-container',  sorobanStateHTML(state.currentExercise, state.lastAttempt, state.supportLevel, state.focusedCol));
   renderFeedback(state);
   set('provisional-container', provisionalNoticeHTML(state.selectedSkillId, state.progress));

@@ -199,6 +199,73 @@ test('legacy single-col five_complement_subtract still scores correctly', () => 
   }
 });
 
+// ── Number grid view ─────────────────────────────────────────────────────────
+
+const viewsMod = await import('../js/ui/views.js');
+
+const countMatches = (s, re) => (s.match(re) || []).length;
+
+test('numberGrid: A and B cell counts match operands', () => {
+  const cases = [
+    [9,  5, 'add'],
+    [47, 8, 'add'],
+    [47, 8, 'subtract'],
+    [10, 5, 'add'],
+    [89, 9, 'add'],
+  ];
+  for (const [startValue, amount, direction] of cases) {
+    const html = viewsMod.numberGridHTML(
+      { startValue, amount, direction, skillId: 'two_digit_add' },
+      0
+    );
+    const aFills = countMatches(html, /fill="#ecc94b"/g);
+    const bFills = countMatches(html, /fill="#9f7aea"/g);
+    assertEq(aFills, startValue, `A=${startValue} ${direction} ${amount}`);
+    assertEq(bFills, amount,     `B=${amount} ${direction} ${amount}`);
+  }
+});
+
+test('numberGrid: hidden for mental skills', () => {
+  const html = viewsMod.numberGridHTML(
+    { startValue: 47, amount: 8, direction: 'add', skillId: 'ghost_mode' },
+    0
+  );
+  assertEq(html, '');
+});
+
+test('numberGrid: hidden at supportLevel 3', () => {
+  const html = viewsMod.numberGridHTML(
+    { startValue: 47, amount: 8, direction: 'add', skillId: 'two_digit_add' },
+    3
+  );
+  assertEq(html, '');
+});
+
+test('numberGrid: hidden for chain exercises', () => {
+  const html = viewsMod.numberGridHTML(
+    { startValue: 47, amount: 8, direction: 'add', skillId: 'two_digit_add', ops: [{}, {}] },
+    0
+  );
+  assertEq(html, '');
+});
+
+test('numberGrid: B starts on the row after A finishes', () => {
+  // A=10 fills row 0 entirely, B should start at cell 10 (row 1, col 0)
+  const html = viewsMod.numberGridHTML(
+    { startValue: 10, amount: 3, direction: 'add', skillId: 'two_digit_add' },
+    0
+  );
+  assertEq(countMatches(html, /fill="#ecc94b"/g), 10);
+  assertEq(countMatches(html, /fill="#9f7aea"/g), 3);
+  // A=9 fills 9 of row 0; B should still start at row 1, NOT row 0 col 9
+  const html2 = viewsMod.numberGridHTML(
+    { startValue: 9, amount: 5, direction: 'add', skillId: 'ten_complement_add' },
+    0
+  );
+  assertEq(countMatches(html2, /fill="#ecc94b"/g), 9);
+  assertEq(countMatches(html2, /fill="#9f7aea"/g), 5);
+});
+
 // ── Run ──────────────────────────────────────────────────────────────────────
 
 let passed = 0, failed = 0;
