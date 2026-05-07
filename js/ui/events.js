@@ -1,5 +1,5 @@
 import { SHORTCUT_MAP } from '../keyboard/shortcuts.js';
-import { SKILL_IDS } from '../config.js';
+import { isMentalOnlySkill } from '../trainer/exercises.js';
 
 /**
  * @param {Object} handlers
@@ -23,7 +23,7 @@ export function bindEvents(handlers, getState) {
     const state = getState();
     const inAnswerInput = document.activeElement?.id === 'answer-input';
     const answered = !!state.lastAttempt;
-    const isMental = state.currentExercise?.skillId === SKILL_IDS.MENTAL_ONLY || state.supportLevel === 3;
+    const isMental = isMentalOnlySkill(state.currentExercise?.skillId) || state.supportLevel === 3;
     const isReflex  = state.inputMode === 'reflex' && !isMental;
 
     // Tab: always toggle mode

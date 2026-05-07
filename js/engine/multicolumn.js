@@ -20,22 +20,7 @@ export function applyMultiColumnOperation(startValue, direction, amount) {
   const carryNeeded  = rule === 'TEN_COMPLEMENT_ADD';
   const borrowNeeded = rule === 'TEN_COMPLEMENT_SUBTRACT';
 
-  let expectedSequence;
-  if (carryNeeded) {
-    // Remove comp beads from ones, then carry +1 to tens
-    expectedSequence = [
-      { col: 0, direction: 'subtract', amount: comp },
-      { col: 1, direction: 'add',      amount: 1    },
-    ];
-  } else if (borrowNeeded) {
-    // Add comp beads to ones (complement), then borrow −1 from tens
-    expectedSequence = [
-      { col: 0, direction: 'add',      amount: comp },
-      { col: 1, direction: 'subtract', amount: 1    },
-    ];
-  } else {
-    expectedSequence = [];
-  }
+  const expectedSequence = buildExpectedSequence(rule, amount, comp);
 
   return {
     rule,
@@ -52,29 +37,101 @@ export function applyMultiColumnOperation(startValue, direction, amount) {
 
 function buildExplanation(rule, start, direction, amount, result, comp) {
   const op = direction === 'add' ? '+' : '−';
-  if (rule === 'TEN_COMPLEMENT_ADD') {
-    return `Carry: ${start} ${op} ${amount} = ${result}. Remove ${comp} from ones, carry +1 to tens.`;
+  switch (rule) {
+    case 'TEN_COMPLEMENT_ADD':
+      return `Carry: ${start} ${op} ${amount} = ${result}. Remove ${comp} from ones, carry +1 to tens.`;
+    case 'TEN_COMPLEMENT_SUBTRACT':
+      return `Borrow: ${start} ${op} ${amount} = ${result}. Add ${comp} to ones, subtract 1 from tens.`;
+    case 'FIVE_COMPLEMENT_ADD': {
+      const diff = amount - 5;
+      const tail = diff === 0 ? '' : diff < 0 ? ` then −${-diff}` : ` then +${diff}`;
+      return `Five-complement on ones: ${start} ${op} ${amount} = ${result}. Activate +5${tail} on the ones rod.`;
+    }
+    case 'FIVE_COMPLEMENT_SUBTRACT': {
+      const diff = amount - 5;
+      const tail = diff === 0 ? '' : diff < 0 ? ` then +${-diff}` : ` then −${diff}`;
+      return `Five-complement on ones: ${start} ${op} ${amount} = ${result}. Remove −5${tail} on the ones rod.`;
+    }
+    case 'DIRECT_ADD':
+    case 'DIRECT_SUBTRACT':
+    default:
+      return `${start} ${op} ${amount} = ${result}. Direct on ones rod.`;
   }
-  if (rule === 'TEN_COMPLEMENT_SUBTRACT') {
-    return `Borrow: ${start} ${op} ${amount} = ${result}. Add ${comp} to ones, subtract 1 from tens.`;
-  }
-  return `${start} ${op} ${amount} = ${result}.`;
 }
 
 function buildSteps(rule, amount, comp, onesResult, tensResult) {
-  if (rule === 'TEN_COMPLEMENT_ADD') {
-    return [
-      `Ones: cannot add ${amount} directly — result exceeds 9`,
-      `Ones: remove ${comp} bead(s) → ${onesResult}`,
-      `Tens: add 1 (carry) → ${tensResult}`,
-    ];
+  switch (rule) {
+    case 'TEN_COMPLEMENT_ADD':
+      return [
+        `Ones: cannot add ${amount} directly — result exceeds 9`,
+        `Ones: remove ${comp} bead(s) → ${onesResult}`,
+        `Tens: add 1 (carry) → ${tensResult}`,
+      ];
+    case 'TEN_COMPLEMENT_SUBTRACT':
+      return [
+        `Ones: cannot subtract ${amount} directly — result below 0`,
+        `Ones: add ${comp} bead(s) (complement) → ${onesResult}`,
+        `Tens: subtract 1 (borrow) → ${tensResult}`,
+      ];
+    case 'FIVE_COMPLEMENT_ADD': {
+      const diff = amount - 5;
+      const steps = [`Ones: activate upper bead (+5)`];
+      if (diff < 0) steps.push(`Ones: remove ${-diff} lower bead(s) → ${onesResult}`);
+      if (diff > 0) steps.push(`Ones: add ${diff} lower bead(s) → ${onesResult}`);
+      return steps;
+    }
+    case 'FIVE_COMPLEMENT_SUBTRACT': {
+      const diff = amount - 5;
+      const steps = [`Ones: remove upper bead (−5)`];
+      if (diff < 0) steps.push(`Ones: add ${-diff} lower bead(s) → ${onesResult}`);
+      if (diff > 0) steps.push(`Ones: remove ${diff} lower bead(s) → ${onesResult}`);
+      return steps;
+    }
+    case 'DIRECT_ADD':
+      return [`Ones: add ${amount} lower bead(s) → ${onesResult}`];
+    case 'DIRECT_SUBTRACT':
+      return [`Ones: remove ${amount} lower bead(s) → ${onesResult}`];
+    default:
+      return [];
   }
-  if (rule === 'TEN_COMPLEMENT_SUBTRACT') {
-    return [
-      `Ones: cannot subtract ${amount} directly — result below 0`,
-      `Ones: add ${comp} bead(s) (complement) → ${onesResult}`,
-      `Tens: subtract 1 (borrow) → ${tensResult}`,
-    ];
+}
+
+/**
+ * Builds the column-aware bead sequence for the given rule.
+ * Operations on the ones rod (col 0) for direct/five-complement; carry/borrow
+ * to the tens rod (col 1) for ten-complement.
+ */
+function buildExpectedSequence(rule, amount, comp) {
+  switch (rule) {
+    case 'DIRECT_ADD':
+      return [{ col: 0, direction: 'add', amount }];
+    case 'DIRECT_SUBTRACT':
+      return [{ col: 0, direction: 'subtract', amount }];
+    case 'FIVE_COMPLEMENT_ADD': {
+      const diff = amount - 5;
+      const seq = [{ col: 0, direction: 'add', amount: 5 }];
+      if (diff < 0) seq.push({ col: 0, direction: 'subtract', amount: -diff });
+      if (diff > 0) seq.push({ col: 0, direction: 'add',      amount:  diff });
+      return seq;
+    }
+    case 'FIVE_COMPLEMENT_SUBTRACT': {
+      const diff = amount - 5;
+      const seq = [{ col: 0, direction: 'subtract', amount: 5 }];
+      if (diff < 0) seq.push({ col: 0, direction: 'add',      amount: -diff });
+      if (diff > 0) seq.push({ col: 0, direction: 'subtract', amount:  diff });
+      return seq;
+    }
+    case 'TEN_COMPLEMENT_ADD':
+      return [
+        { col: 0, direction: 'subtract', amount: comp },
+        { col: 1, direction: 'add',      amount: 1    },
+      ];
+    case 'TEN_COMPLEMENT_SUBTRACT':
+      return [
+        { col: 0, direction: 'add',      amount: comp },
+        { col: 1, direction: 'subtract', amount: 1    },
+      ];
+    default:
+      return [];
   }
-  return [];
 }

@@ -1,6 +1,7 @@
-import { STATUS, SUPPORT_LABELS, LICENSE, SKILL_IDS } from '../config.js';
+import { STATUS, SUPPORT_LABELS, LICENSE } from '../config.js';
 import { getAllSkills, getRecommendationHint } from '../trainer/skills.js';
 import { getMasteryBlockers } from '../trainer/gates.js';
+import { isMentalOnlySkill } from '../trainer/exercises.js';
 import { operationTokenToLabel, sequenceToLabels } from '../keyboard/shortcuts.js';
 
 // ── Skill selector ────────────────────────────────────────────────────────────
@@ -58,7 +59,7 @@ export function exercisePanelHTML(state) {
     return `<div><em>No exercise loaded.</em> <button id="btn-next">Start Exercise</button></div>`;
   }
   const answered = !!lastAttempt;
-  const isMental = ex.skillId === SKILL_IDS.MENTAL_ONLY || supportLevel === 3;
+  const isMental = isMentalOnlySkill(ex.skillId) || supportLevel === 3;
   const isReflex = inputMode === 'reflex' && !isMental;
 
   const seqLabels = sequenceToLabels(inputSequence);
@@ -124,7 +125,7 @@ function sorobanSVG(value) {
 }
 
 export function sorobanStateHTML(exercise, lastAttempt, supportLevel, focusedCol = 0) {
-  if (!exercise || supportLevel === 3) return '';
+  if (!exercise || supportLevel === 3 || isMentalOnlySkill(exercise.skillId)) return '';
   const showAfter = !!lastAttempt;
   const numCols   = exercise.numCols ?? 1;
 
@@ -200,8 +201,8 @@ export function sorobanStateHTML(exercise, lastAttempt, supportLevel, focusedCol
 
 // ── Keyboard legend ───────────────────────────────────────────────────────────
 
-export function keyboardLegendHTML(inputMode, supportLevel, hintsVisible, numCols = 1) {
-  if (supportLevel === 3 || !hintsVisible) return '';
+export function keyboardLegendHTML(inputMode, supportLevel, hintsVisible, numCols = 1, skillId = null) {
+  if (supportLevel === 3 || !hintsVisible || isMentalOnlySkill(skillId)) return '';
   const addKeys  = [['J','+1'],['K','+2'],['L','+3'],[';','+4'],['U','+5'],['I','+10']];
   const subKeys  = [['F','−1'],['D','−2'],['S','−3'],['A','−4'],['R','−5'],['E','−10']];
   const mkKey = ([k, v]) => `<span class="legend-key"><kbd>${k}</kbd><span>${v}</span></span>`;
@@ -243,7 +244,7 @@ export function sequencePanelHTML(inputSequence, isMental) {
 // ── Rule hint ─────────────────────────────────────────────────────────────────
 
 export function hintsHTML(exercise, supportLevel, hintsVisible) {
-  if (!exercise || supportLevel >= 1 || !hintsVisible) return '';
+  if (!exercise || supportLevel >= 1 || !hintsVisible || isMentalOnlySkill(exercise.skillId)) return '';
   return `<div id="hints"><strong>Rule:</strong> ${exercise.expectedRule}</div>`;
 }
 

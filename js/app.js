@@ -1,10 +1,10 @@
 import { createInitialAppState, resetAppState } from './state.js';
 import { loadAppState, saveAppState, clearAppState } from './storage.js';
-import { generateExercise } from './trainer/exercises.js';
+import { generateExercise, isMentalOnlySkill } from './trainer/exercises.js';
 import { evaluateAnswerNumeric, evaluateAnswerSequence } from './trainer/scoring.js';
 import { updateProgress, unlockEligibleSkills, applyRustyDecay, migrateLockedToLearning } from './trainer/progress.js';
 import { canMasterSkill } from './trainer/gates.js';
-import { STATUS, PROVISIONAL_HOLD_MS, SKILL_IDS } from './config.js';
+import { STATUS, PROVISIONAL_HOLD_MS } from './config.js';
 import { applyOperation } from './engine/operations.js';
 import { applyMultiColumnOperation } from './engine/multicolumn.js';
 import {
@@ -50,7 +50,7 @@ function applyStatusTransitions() {
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 function isMentalMode() {
-  return state.currentExercise?.skillId === SKILL_IDS.MENTAL_ONLY || state.supportLevel === 3;
+  return isMentalOnlySkill(state.currentExercise?.skillId) || state.supportLevel === 3;
 }
 
 function getTransition() {

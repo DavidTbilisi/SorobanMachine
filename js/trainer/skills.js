@@ -13,11 +13,11 @@ const SKILL_TREE = [
   { id: SKILL_IDS.TEN_COMPLEMENT_SUBTRACT, label: 'Ten Complement Subtract',   prerequisites: [SKILL_IDS.FIVE_COMPLEMENT_SUBTRACT],                                  implemented: true  },
   { id: SKILL_IDS.CARRY,                   label: 'Carry (2-col)',             prerequisites: [SKILL_IDS.TEN_COMPLEMENT_ADD],                                        implemented: true  },
   { id: SKILL_IDS.BORROW,                  label: 'Borrow (2-col)',            prerequisites: [SKILL_IDS.TEN_COMPLEMENT_SUBTRACT],                                   implemented: true  },
-  { id: SKILL_IDS.TWO_DIGIT_ADD,           label: '2-Digit Addition',          prerequisites: [SKILL_IDS.CARRY],                                                     implemented: false },
-  { id: SKILL_IDS.TWO_DIGIT_SUBTRACT,      label: '2-Digit Subtraction',       prerequisites: [SKILL_IDS.BORROW],                                                   implemented: false },
-  { id: SKILL_IDS.TWO_DIGIT_MIXED,         label: 'Mixed 2-Digit',             prerequisites: [SKILL_IDS.TWO_DIGIT_ADD, SKILL_IDS.TWO_DIGIT_SUBTRACT],              implemented: false },
-  { id: SKILL_IDS.GHOST_MODE,              label: 'Ghost Mode',                prerequisites: [SKILL_IDS.TWO_DIGIT_MIXED],                                          implemented: false },
-  { id: SKILL_IDS.STILL_HANDS,             label: 'Still Hands',               prerequisites: [SKILL_IDS.GHOST_MODE],                                               implemented: false },
+  { id: SKILL_IDS.TWO_DIGIT_ADD,           label: '2-Digit Addition',          prerequisites: [SKILL_IDS.CARRY],                                                     implemented: true  },
+  { id: SKILL_IDS.TWO_DIGIT_SUBTRACT,      label: '2-Digit Subtraction',       prerequisites: [SKILL_IDS.BORROW],                                                   implemented: true  },
+  { id: SKILL_IDS.TWO_DIGIT_MIXED,         label: 'Mixed 2-Digit',             prerequisites: [SKILL_IDS.TWO_DIGIT_ADD, SKILL_IDS.TWO_DIGIT_SUBTRACT],              implemented: true  },
+  { id: SKILL_IDS.GHOST_MODE,              label: 'Ghost Mode',                prerequisites: [SKILL_IDS.TWO_DIGIT_MIXED],                                          implemented: true  },
+  { id: SKILL_IDS.STILL_HANDS,             label: 'Still Hands',               prerequisites: [SKILL_IDS.GHOST_MODE],                                               implemented: true  },
   { id: SKILL_IDS.MENTAL_ONLY,             label: 'Mental Soroban',            prerequisites: [SKILL_IDS.STILL_HANDS],                                              implemented: true  },
 ];
 

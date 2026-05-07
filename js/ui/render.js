@@ -13,6 +13,7 @@ import {
 } from './views.js';
 import { applyOperation } from '../engine/operations.js';
 import { applyMultiColumnOperation } from '../engine/multicolumn.js';
+import { isMentalOnlySkill } from '../trainer/exercises.js';
 import { sequenceToLabels } from '../keyboard/shortcuts.js';
 
 /** Full re-render. Used on init and reset. */
@@ -30,7 +31,7 @@ export function renderExercise(state) {
   const numCols = state.currentExercise?.numCols ?? 1;
   set('exercise-container',  exercisePanelHTML(state));
   set('soroban-container',   sorobanStateHTML(state.currentExercise, state.lastAttempt, state.supportLevel, state.focusedCol));
-  set('legend-container',    keyboardLegendHTML(state.inputMode, state.supportLevel, state.hintsVisible, numCols));
+  set('legend-container',    keyboardLegendHTML(state.inputMode, state.supportLevel, state.hintsVisible, numCols, state.currentExercise?.skillId));
   set('hints-container',     hintsHTML(state.currentExercise, state.supportLevel, state.hintsVisible));
   renderFeedback(state);
   set('provisional-container', provisionalNoticeHTML(state.selectedSkillId, state.progress));
@@ -66,8 +67,9 @@ export function renderSequencePanel(state) {
 
 export function renderFeedback(state) {
   let transition = null;
-  if (state.lastAttempt && state.currentExercise && state.supportLevel < 3) {
-    const { startValue, direction, amount, numCols } = state.currentExercise;
+  const ex = state.currentExercise;
+  if (state.lastAttempt && ex && state.supportLevel < 3 && !isMentalOnlySkill(ex.skillId)) {
+    const { startValue, direction, amount, numCols } = ex;
     transition = (numCols ?? 1) > 1
       ? applyMultiColumnOperation(startValue, direction, amount)
       : applyOperation(startValue, direction, amount);
