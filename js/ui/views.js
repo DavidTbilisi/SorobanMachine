@@ -97,68 +97,120 @@ function sorobanSVG(value) {
   const upper = value >= 5 ? 1 : 0;
   const lower = value % 5;
 
-  const W = 64, H = 174, cx = 32;
-  const rx = 13, ry = 9;
-  const beamY = 70;
-  const beadGap = 22;
-  const bottomBase = H - 14;
+  // Layout constants
+  const W = 68, H = 200, cx = 34;
+  const FH = 10;                      // frame bar height
+  const BCY = 100, BH = 14;          // beam center-Y, beam height
+  const BW = 52, BHALF = 26;         // bead width, half-width
+  const BHH = 9;                      // bead half-height
+  const STEP = 21;                    // bead center-to-center step
 
-  const upperCY = upper === 1 ? beamY - ry - 3 : 16;
+  // Upper bead Y
+  const upperCY = upper === 1
+    ? BCY - BH / 2 - BHH - 3          // active: snug above beam
+    : FH + BHH + 4;                   // inactive: near top frame
 
-  const beads = [];
+  // Lower beads Y
+  const lowerTop = BCY + BH / 2;
+  const lowerBot = H - FH;
+  const lowerBeads = [];
   for (let i = 0; i < lower; i++)
-    beads.push({ cy: beamY + ry + 5 + i * beadGap, active: true });
+    lowerBeads.push({ cy: lowerTop + BHH + 2 + i * STEP, active: true });
   for (let j = (4 - lower) - 1; j >= 0; j--)
-    beads.push({ cy: bottomBase - j * beadGap, active: false });
+    lowerBeads.push({ cy: lowerBot - BHH - 2 - j * STEP, active: false });
 
-  const bead = (cy, active, isUpper = false) => {
-    const fill   = active ? (isUpper ? 'url(#sg-upper)' : 'url(#sg-lower)') : 'url(#sg-inactive)';
-    const stroke = active ? (isUpper ? '#8a5050' : '#507850') : '#c8c4bc';
-    const glow   = active ? `<ellipse cx="${cx - rx*0.28}" cy="${cy - ry*0.32}" rx="${rx*0.28}" ry="${ry*0.22}" fill="rgba(255,255,255,0.52)"/>` : '';
-    return `<ellipse cx="${cx}" cy="${cy}" rx="${rx}" ry="${ry}" fill="${fill}" stroke="${stroke}" stroke-width="0.8" filter="url(#sg-drop)"/>
-    ${glow}`;
+  // Bicone path: curved diamond (the classic soroban bead silhouette)
+  const bicone = (bx, by) => {
+    const c = 0.26; // curvature factor — 0 = sharp diamond, 1 = ellipse
+    return `M${bx} ${by - BHH}` +
+      ` Q${bx + BHALF} ${by - BHH * c} ${bx + BHALF} ${by}` +
+      ` Q${bx + BHALF} ${by + BHH * c} ${bx} ${by + BHH}` +
+      ` Q${bx - BHALF} ${by + BHH * c} ${bx - BHALF} ${by}` +
+      ` Q${bx - BHALF} ${by - BHH * c} ${bx} ${by - BHH}Z`;
   };
 
-  return `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" class="soroban-svg">
-    <defs>
-      <radialGradient id="sg-upper" cx="35%" cy="28%" r="68%" gradientUnits="objectBoundingBox">
-        <stop offset="0%"   stop-color="#f8e8e8"/>
-        <stop offset="42%"  stop-color="#d8a0a0"/>
-        <stop offset="100%" stop-color="#8a5050"/>
-      </radialGradient>
-      <radialGradient id="sg-lower" cx="35%" cy="28%" r="68%" gradientUnits="objectBoundingBox">
-        <stop offset="0%"   stop-color="#e0f0dc"/>
-        <stop offset="42%"  stop-color="#a0c898"/>
-        <stop offset="100%" stop-color="#507850"/>
-      </radialGradient>
-      <radialGradient id="sg-inactive" cx="35%" cy="28%" r="68%" gradientUnits="objectBoundingBox">
-        <stop offset="0%"   stop-color="#f8f6f2"/>
-        <stop offset="50%"  stop-color="#e4e0d8"/>
-        <stop offset="100%" stop-color="#c8c4bc"/>
-      </radialGradient>
-      <linearGradient id="sg-rod" x1="${cx-2}" y1="0" x2="${cx+2}" y2="0" gradientUnits="userSpaceOnUse">
-        <stop offset="0%"   stop-color="#686460"/>
-        <stop offset="40%"  stop-color="#b4b0a8"/>
-        <stop offset="100%" stop-color="#686460"/>
-      </linearGradient>
-      <linearGradient id="sg-beam" x1="0" y1="${beamY-5}" x2="0" y2="${beamY+5}" gradientUnits="userSpaceOnUse">
-        <stop offset="0%"   stop-color="#d4cec8"/>
-        <stop offset="40%"  stop-color="#a8a09a"/>
-        <stop offset="100%" stop-color="#787470"/>
-      </linearGradient>
-      <filter id="sg-drop" x="-25%" y="-25%" width="150%" height="150%">
-        <feDropShadow dx="0" dy="1.5" stdDeviation="1.2" flood-color="rgba(0,0,0,0.30)"/>
-      </filter>
-      <filter id="sg-beam-shadow" x="-5%" y="-30%" width="110%" height="160%">
-        <feDropShadow dx="0" dy="1" stdDeviation="1" flood-color="rgba(0,0,0,0.22)"/>
-      </filter>
-    </defs>
-    <rect x="${cx-2}" y="4" width="4" height="${H-12}" fill="url(#sg-rod)" rx="2"/>
-    <rect x="4" y="${beamY-5}" width="${W-8}" height="10" fill="url(#sg-beam)" rx="3.5" filter="url(#sg-beam-shadow)"/>
-    ${bead(upperCY, upper === 1, true)}
-    ${beads.map(b => bead(b.cy, b.active, false)).join('\n    ')}
-    <text x="${cx}" y="${H-1}" text-anchor="middle" font-size="11" fill="#78746e" font-family="monospace" font-weight="700">${value}</text>
-  </svg>`;
+  // Render one bead: shadow-filtered shape + specular highlight dot outside filter
+  const bead = (by, active, isUpper) => {
+    const grad   = active ? (isUpper ? 'sbu' : 'sbl') : 'sbi';
+    const stroke = active ? (isUpper ? '#8a5252' : '#507852') : '#c8c4bc';
+    const hlX = cx - BHALF * 0.26, hlY = by - BHH * 0.38;
+    const hl = active
+      ? `<ellipse cx="${hlX}" cy="${hlY}" rx="${BHALF * 0.19}" ry="${BHH * 0.24}" fill="rgba(255,255,255,.6)"/>`
+      : '';
+    return `<path d="${bicone(cx, by)}" fill="url(#${grad})" stroke="${stroke}" stroke-width="0.75" filter="url(#sbsh)"/>${hl}`;
+  };
+
+  const LY = H + 11; // label Y
+  return `<svg width="${W}" height="${LY + 2}" viewBox="0 0 ${W} ${LY + 2}" class="soroban-svg">
+  <defs>
+    <filter id="sbsh" x="-22%" y="-30%" width="144%" height="160%">
+      <feDropShadow dx="0" dy="1.8" stdDeviation="1.4" flood-color="rgba(0,0,0,.22)"/>
+    </filter>
+    <!-- Milk red lacquer — upper bead -->
+    <radialGradient id="sbu" cx="38%" cy="30%" r="70%">
+      <stop offset="0%"   stop-color="#fdf2f2"/>
+      <stop offset="20%"  stop-color="#f0c8c8"/>
+      <stop offset="50%"  stop-color="#d89898"/>
+      <stop offset="78%"  stop-color="#c07878"/>
+      <stop offset="100%" stop-color="#9a5858"/>
+    </radialGradient>
+    <!-- Milk green lacquer — lower beads -->
+    <radialGradient id="sbl" cx="38%" cy="30%" r="70%">
+      <stop offset="0%"   stop-color="#f0f8ee"/>
+      <stop offset="20%"  stop-color="#c8e0c0"/>
+      <stop offset="50%"  stop-color="#98c890"/>
+      <stop offset="78%"  stop-color="#78a870"/>
+      <stop offset="100%" stop-color="#527852"/>
+    </radialGradient>
+    <!-- Neutral linen — inactive -->
+    <radialGradient id="sbi" cx="38%" cy="30%" r="70%">
+      <stop offset="0%"   stop-color="#fdfcfa"/>
+      <stop offset="25%"  stop-color="#f0ece6"/>
+      <stop offset="55%"  stop-color="#dedad2"/>
+      <stop offset="80%"  stop-color="#cec8c0"/>
+      <stop offset="100%" stop-color="#b8b4ac"/>
+    </radialGradient>
+    <!-- Polished rod — 5-stop cylindrical highlight -->
+    <linearGradient id="sbrod" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%"   stop-color="#626060"/>
+      <stop offset="22%"  stop-color="#a8a4a0"/>
+      <stop offset="50%"  stop-color="#e4e0dc"/>
+      <stop offset="78%"  stop-color="#a8a4a0"/>
+      <stop offset="100%" stop-color="#626060"/>
+    </linearGradient>
+    <!-- Warm wood frame -->
+    <linearGradient id="sbfr" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%"   stop-color="#cca878"/>
+      <stop offset="40%"  stop-color="#a08050"/>
+      <stop offset="100%" stop-color="#785828"/>
+    </linearGradient>
+    <!-- Darker beam wood -->
+    <linearGradient id="sbbm" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%"   stop-color="#b89070"/>
+      <stop offset="35%"  stop-color="#906840"/>
+      <stop offset="100%" stop-color="#5c3a18"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Top frame bar -->
+  <rect x="1" y="1" width="${W - 2}" height="${FH}" rx="3" fill="url(#sbfr)" stroke="rgba(0,0,0,.13)" stroke-width=".5"/>
+  <rect x="5" y="3" width="${W - 10}" height="3" rx="1.5" fill="rgba(255,255,255,.22)"/>
+
+  <!-- Rod (cylindrical) -->
+  <rect x="${cx - 2}" y="${FH}" width="4" height="${H - FH * 2}" fill="url(#sbrod)" rx="2"/>
+
+  <!-- Beam -->
+  <rect x="1" y="${BCY - BH / 2}" width="${W - 2}" height="${BH}" rx="4" fill="url(#sbbm)" stroke="rgba(0,0,0,.15)" stroke-width=".5"/>
+  <rect x="5" y="${BCY - BH / 2 + 2}" width="${W - 10}" height="3" rx="1.5" fill="rgba(255,255,255,.15)"/>
+
+  <!-- Bottom frame bar -->
+  <rect x="1" y="${H - FH}" width="${W - 2}" height="${FH}" rx="3" fill="url(#sbfr)" stroke="rgba(0,0,0,.13)" stroke-width=".5"/>
+
+  ${bead(upperCY, upper === 1, true)}
+  ${lowerBeads.map(b => bead(b.cy, b.active, false)).join('\n  ')}
+
+  <text x="${cx}" y="${LY}" text-anchor="middle" font-size="11" fill="#78746e" font-family="monospace" font-weight="700">${value}</text>
+</svg>`;
 }
 
 export function sorobanStateHTML(exercise, lastAttempt, supportLevel, focusedCol = 0) {

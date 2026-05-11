@@ -280,7 +280,11 @@ button:disabled { opacity: 0.35; cursor: default; box-shadow: none; }
   text-align: center;
 }
 
-.soroban-svg { display: block; }
+@keyframes soroban-settle {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.soroban-svg { display: block; animation: soroban-settle 0.18s ease-out both; }
 
 .soroban-focused {
   outline: 2.5px solid var(--mg);
@@ -289,10 +293,10 @@ button:disabled { opacity: 0.35; cursor: default; box-shadow: none; }
   padding: 4px;
 }
 
-.soroban-placeholder { width: 64px; }
+.soroban-placeholder { width: 68px; }
 .soroban-placeholder-box {
-  width: 64px;
-  height: 174px;
+  width: 68px;
+  height: 213px;
   display: flex;
   align-items: center;
   justify-content: center;
