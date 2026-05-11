@@ -4,6 +4,17 @@ import { getMasteryBlockers } from '../trainer/gates.js';
 import { isMentalOnlySkill } from '../trainer/exercises.js';
 import { operationTokenToLabel, sequenceToLabels } from '../keyboard/shortcuts.js';
 
+// ── App-mode tabs ─────────────────────────────────────────────────────────────
+
+export function appModeTabsHTML(appMode) {
+  const tab = (mode, label, hint) =>
+    `<button class="mode-tab${appMode === mode ? ' active' : ''}" data-mode="${mode}">
+       ${label}<span class="mode-tab-hint">${hint}</span>
+     </button>`;
+  return `${tab('practice', 'Practice', 'structured skill tree')}
+          ${tab('flash',    'Flash Anzan', 'speed sum challenge')}`;
+}
+
 // ── Skill selector ────────────────────────────────────────────────────────────
 
 export function skillSelectorHTML(progress, selectedSkillId) {

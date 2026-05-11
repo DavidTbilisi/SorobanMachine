@@ -1,4 +1,5 @@
 import {
+  appModeTabsHTML,
   skillSelectorHTML,
   skillTreeHTML,
   supportSelectorHTML,
@@ -14,6 +15,7 @@ import {
   attemptLogHTML,
   provisionalNoticeHTML,
 } from './views.js';
+import { flashAnzanHTML } from './flashAnzan.js';
 import { applyOperation } from '../engine/operations.js';
 import { applyMultiColumnOperation } from '../engine/multicolumn.js';
 import { isMentalOnlySkill } from '../trainer/exercises.js';
@@ -21,6 +23,7 @@ import { sequenceToLabels } from '../keyboard/shortcuts.js';
 
 /** Full re-render. Used on init and reset. */
 export function renderApp(state) {
+  renderAppMode(state);
   set('skill-container',   skillSelectorHTML(state.progress, state.selectedSkillId));
   set('support-container', supportSelectorHTML(state.supportLevel));
   set('mode-container',    modeSelectorHTML(state.inputMode));
@@ -28,6 +31,24 @@ export function renderApp(state) {
   renderExercise(state);
   renderDashboard(state);
   renderAttemptLog(state);
+  renderFlashAnzan(state);
+}
+
+/** Toggle visibility of the practice vs flash anzan layout and render the tabs. */
+export function renderAppMode(state) {
+  set('app-mode-container', appModeTabsHTML(state.appMode));
+  const practice = document.getElementById('practice-layout');
+  const flash    = document.getElementById('flash-anzan-container');
+  if (practice) practice.hidden = state.appMode !== 'practice';
+  if (flash)    flash.hidden    = state.appMode !== 'flash';
+}
+
+/** Re-render the entire flash anzan panel from its substate. */
+export function renderFlashAnzan(state) {
+  set('flash-anzan-container', flashAnzanHTML(state.flashAnzan));
+  if (state.flashAnzan.phase === 'awaitingAnswer') {
+    document.getElementById('fa-answer')?.focus();
+  }
 }
 
 export function renderSkillTree(state) {

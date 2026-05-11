@@ -10,21 +10,33 @@ import { applyMultiColumnOperation } from './engine/multicolumn.js';
 import {
   renderApp, renderAfterSubmit, renderExercise,
   renderDashboard, renderAttemptLog, renderSequencePanel, renderFocusedCol,
-  renderSkillTree, renderViz,
+  renderSkillTree, renderViz, renderAppMode, renderFlashAnzan,
 } from './ui/render.js';
 import { bindEvents } from './ui/events.js';
+import {
+  createInitialFlashAnzanState, serializableFlashAnzanState,
+  startFlashRound, submitFlashAnswer, replayFlash, backToFlashIdle, cancelTimers,
+} from './ui/flashAnzan.js';
 
 let state = loadAppState() ?? createInitialAppState();
 
 // Hydrate fields that may be missing from a saved state
+state.appMode       ??= 'practice';
 state.inputMode     ??= 'command';
 state.inputSequence ??= [];
 state.hintsVisible  ??= true;
 state.focusedCol    ??= 0;
 state.vizMode       ??= 'grid';
+state.flashAnzan      = serializableFlashAnzanState(state.flashAnzan ?? createInitialFlashAnzanState());
 
 state.progress = migrateLockedToLearning(state.progress);
 state.progress = applyRustyDecay(state.progress);
+
+// Persist state. Flash anzan runtime (timers, in-flight phase) is stripped —
+// only stats survive a reload.
+function persist() {
+  saveAppState({ ...state, flashAnzan: serializableFlashAnzanState(state.flashAnzan) });
+}
 
 // ── Status transitions ────────────────────────────────────────────────────────
 
@@ -101,7 +113,7 @@ function onSubmit() {
   state.progress = updateProgress(state.progress, attempt);
 
   applyStatusTransitions();
-  saveAppState(state);
+  persist();
 
   renderAfterSubmit(state);
   renderSkillTree(state);
@@ -120,7 +132,7 @@ function onNext() {
   state.lastAttempt       = null;
   state.inputSequence     = [];
   state.focusedCol        = 0;
-  saveAppState(state);
+  persist();
   renderExercise(state);
 }
 
@@ -137,7 +149,7 @@ function onSkillChange(skillId) {
   state.lastAttempt     = null;
   state.inputSequence   = [];
   state.focusedCol      = 0;
-  saveAppState(state);
+  persist();
   renderSkillTree(state);
   renderExercise(state);
 }
@@ -146,14 +158,14 @@ function onSupportChange(level) {
   state.supportLevel  = level;
   state.inputSequence = [];
   state.focusedCol    = 0;
-  saveAppState(state);
+  persist();
   renderExercise(state);
 }
 
 function onModeChange(mode) {
   state.inputMode     = mode;
   state.inputSequence = [];
-  saveAppState(state);
+  persist();
   renderExercise(state);
 }
 
@@ -163,7 +175,7 @@ function onModeToggle() {
 
 function onToggleHints() {
   state.hintsVisible = !state.hintsVisible;
-  saveAppState(state);
+  persist();
   renderExercise(state);
 }
 
@@ -211,8 +223,47 @@ function onColRight() {
 
 function onVizChange(mode) {
   state.vizMode = mode;
-  saveAppState(state);
+  persist();
   renderViz(state);
+}
+
+// ── App-mode (practice / flash anzan) ─────────────────────────────────────────
+
+function onAppModeChange(mode) {
+  if (mode !== 'practice' && mode !== 'flash') return;
+  if (state.appMode === mode) return;
+  if (state.appMode === 'flash') {
+    cancelTimers(state);
+    state.flashAnzan = { ...state.flashAnzan, phase: 'idle', timers: [] };
+  }
+  state.appMode = mode;
+  persist();
+  renderAppMode(state);
+  renderFlashAnzan(state);
+}
+
+// ── Flash Anzan handlers ──────────────────────────────────────────────────────
+
+function onFlashStart(presetKey) {
+  if (state.appMode !== 'flash') return;
+  startFlashRound(state, presetKey, () => renderFlashAnzan(state));
+}
+
+function onFlashSubmit() {
+  const raw = document.getElementById('fa-answer')?.value ?? '';
+  submitFlashAnswer(state, raw, () => {
+    renderFlashAnzan(state);
+    persist();
+  });
+}
+
+function onFlashReplay() {
+  replayFlash(state, () => renderFlashAnzan(state));
+}
+
+function onFlashBack() {
+  backToFlashIdle(state, () => renderFlashAnzan(state));
+  persist();
 }
 
 // ── Boot ──────────────────────────────────────────────────────────────────────
@@ -223,6 +274,8 @@ bindEvents(
     onModeChange, onModeToggle, onToggleHints,
     onAddToken, onUndo, onClearSequence, onAddCommandInput,
     onColLeft, onColRight, onVizChange,
+    onAppModeChange,
+    onFlashStart, onFlashSubmit, onFlashReplay, onFlashBack,
   },
   () => state,
 );

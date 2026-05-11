@@ -1,9 +1,11 @@
 import { SKILL_IDS } from './config.js';
 import { createInitialProgress } from './trainer/progress.js';
+import { createInitialFlashAnzanState } from './ui/flashAnzan.js';
 
 /** @returns {Object} fresh app state */
 export function createInitialAppState() {
   return {
+    appMode:          'practice',   // 'practice' | 'flash'
     selectedSkillId:  SKILL_IDS.DIRECT_ADD,
     supportLevel:     0,
     currentExercise:  null,
@@ -15,6 +17,8 @@ export function createInitialAppState() {
     inputSequence:    [],         // current token sequence being built
     hintsVisible:     true,       // toggled by H key
     focusedCol:       0,          // which rod the shortcut keys operate on (0=ones)
+    vizMode:          'grid',
+    flashAnzan:       createInitialFlashAnzanState(),
   };
 }
 
