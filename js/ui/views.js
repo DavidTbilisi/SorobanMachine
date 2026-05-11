@@ -113,7 +113,7 @@ function sorobanSVG(value) {
 
   const bead = (cy, active, isUpper = false) => {
     const fill   = active ? (isUpper ? 'url(#sg-upper)' : 'url(#sg-lower)') : 'url(#sg-inactive)';
-    const stroke = active ? (isUpper ? '#78350f' : '#7f1d1d') : '#c4a882';
+    const stroke = active ? (isUpper ? '#7a5010' : '#1a4535') : '#c4b09a';
     const glow   = active ? `<ellipse cx="${cx - rx*0.28}" cy="${cy - ry*0.32}" rx="${rx*0.28}" ry="${ry*0.22}" fill="rgba(255,255,255,0.52)"/>` : '';
     return `<ellipse cx="${cx}" cy="${cy}" rx="${rx}" ry="${ry}" fill="${fill}" stroke="${stroke}" stroke-width="0.8" filter="url(#sg-drop)"/>
     ${glow}`;
@@ -122,29 +122,29 @@ function sorobanSVG(value) {
   return `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" class="soroban-svg">
     <defs>
       <radialGradient id="sg-upper" cx="35%" cy="28%" r="68%" gradientUnits="objectBoundingBox">
-        <stop offset="0%"   stop-color="#fde68a"/>
-        <stop offset="42%"  stop-color="#d97706"/>
-        <stop offset="100%" stop-color="#78350f"/>
+        <stop offset="0%"   stop-color="#fef3b0"/>
+        <stop offset="40%"  stop-color="#d4a030"/>
+        <stop offset="100%" stop-color="#7a5a10"/>
       </radialGradient>
       <radialGradient id="sg-lower" cx="35%" cy="28%" r="68%" gradientUnits="objectBoundingBox">
-        <stop offset="0%"   stop-color="#fca5a5"/>
-        <stop offset="40%"  stop-color="#dc2626"/>
-        <stop offset="100%" stop-color="#7f1d1d"/>
+        <stop offset="0%"   stop-color="#a8dfc0"/>
+        <stop offset="42%"  stop-color="#2d7355"/>
+        <stop offset="100%" stop-color="#1a4535"/>
       </radialGradient>
       <radialGradient id="sg-inactive" cx="35%" cy="28%" r="68%" gradientUnits="objectBoundingBox">
         <stop offset="0%"   stop-color="#fef9f0"/>
-        <stop offset="50%"  stop-color="#e8d5bc"/>
-        <stop offset="100%" stop-color="#c4a882"/>
+        <stop offset="50%"  stop-color="#e4d8c4"/>
+        <stop offset="100%" stop-color="#c4b09a"/>
       </radialGradient>
       <linearGradient id="sg-rod" x1="${cx-2}" y1="0" x2="${cx+2}" y2="0" gradientUnits="userSpaceOnUse">
-        <stop offset="0%"   stop-color="#3d1f0a"/>
-        <stop offset="40%"  stop-color="#7a4a28"/>
-        <stop offset="100%" stop-color="#3d1f0a"/>
+        <stop offset="0%"   stop-color="#4a3018"/>
+        <stop offset="40%"  stop-color="#8c6840"/>
+        <stop offset="100%" stop-color="#4a3018"/>
       </linearGradient>
       <linearGradient id="sg-beam" x1="0" y1="${beamY-5}" x2="0" y2="${beamY+5}" gradientUnits="userSpaceOnUse">
-        <stop offset="0%"   stop-color="#c8793e"/>
-        <stop offset="40%"  stop-color="#8b4513"/>
-        <stop offset="100%" stop-color="#4a1f06"/>
+        <stop offset="0%"   stop-color="#d49060"/>
+        <stop offset="40%"  stop-color="#9a6030"/>
+        <stop offset="100%" stop-color="#5a3010"/>
       </linearGradient>
       <filter id="sg-drop" x="-25%" y="-25%" width="150%" height="150%">
         <feDropShadow dx="0" dy="1.5" stdDeviation="1.2" flood-color="rgba(0,0,0,0.30)"/>
@@ -157,7 +157,7 @@ function sorobanSVG(value) {
     <rect x="4" y="${beamY-5}" width="${W-8}" height="10" fill="url(#sg-beam)" rx="3.5" filter="url(#sg-beam-shadow)"/>
     ${bead(upperCY, upper === 1, true)}
     ${beads.map(b => bead(b.cy, b.active, false)).join('\n    ')}
-    <text x="${cx}" y="${H-1}" text-anchor="middle" font-size="11" fill="#6b5344" font-family="monospace" font-weight="700">${value}</text>
+    <text x="${cx}" y="${H-1}" text-anchor="middle" font-size="11" fill="#5a7060" font-family="monospace" font-weight="700">${value}</text>
   </svg>`;
 }
 
@@ -255,9 +255,9 @@ export function numberGridHTML(exercise, supportLevel) {
   const W = COLS * (CELL + GAP) - GAP + PAD * 2;
   const H = ROWS * (CELL + GAP) - GAP + PAD * 2;
 
-  const A_FILL = '#d97706', A_STROKE = '#78350f';
-  const B_FILL = '#dc2626', B_STROKE = '#7f1d1d';
-  const EMPTY_STROKE = '#ddd0ba';
+  const A_FILL = '#d4a030', A_STROKE = '#7a5a10';
+  const B_FILL = '#2d7355', B_STROKE = '#1a4535';
+  const EMPTY_STROKE = '#c8d8c4';
 
   const aCount = Math.max(0, Math.min(100, startValue));
   const bStart = aCount;
@@ -494,10 +494,10 @@ export function skillTreeHTML(progress, selectedSkillId) {
 
   const STYLE = {
     locked:      { fill: '#f3f4f6', stroke: '#d1d5db', text: '#9ca3af', weight: '400' },
-    learning:    { fill: '#dbeafe', stroke: '#3b82f6', text: '#1e40af', weight: '700' },
-    provisional: { fill: '#ede9fe', stroke: '#8b5cf6', text: '#5b21b6', weight: '700' },
-    mastered:    { fill: '#dcfce7', stroke: '#16a34a', text: '#14532d', weight: '700' },
-    rusty:       { fill: '#fef9c3', stroke: '#d97706', text: '#78350f', weight: '700' },
+    learning:    { fill: '#e8f2fc', stroke: '#5a9fd4', text: '#1a4a7a', weight: '600' },
+    provisional: { fill: '#f0ecfc', stroke: '#9070c8', text: '#4a2890', weight: '600' },
+    mastered:    { fill: '#dff4ea', stroke: '#2d7355', text: '#1a4535', weight: '700' },
+    rusty:       { fill: '#fef6dc', stroke: '#c49030', text: '#7a5010', weight: '600' },
   };
 
   const ICON = { locked: '', learning: '', provisional: '◑ ', mastered: '✓ ', rusty: '⚠ ' };
@@ -521,13 +521,13 @@ export function skillTreeHTML(progress, selectedSkillId) {
 
     return `<g class="skill-node" data-skill-id="${skill.id}" style="cursor:pointer">
       <rect x="${x - NODE_W / 2}" y="${y - NODE_H / 2}" width="${NODE_W}" height="${NODE_H}" rx="${RX}"
-        fill="${isSelected ? '#fff2f0' : st.fill}"
-        stroke="${isSelected ? '#c9230f' : st.stroke}"
+        fill="${isSelected ? '#e8f5ee' : st.fill}"
+        stroke="${isSelected ? '#2d7355' : st.stroke}"
         stroke-width="${isSelected ? 2.5 : 1.5}"/>
       <text x="${x}" y="${y}" text-anchor="middle" dominant-baseline="middle"
-        font-size="12" font-family="'Baloo 2',system-ui,sans-serif"
-        fill="${isSelected ? '#c9230f' : st.text}"
-        font-weight="${isSelected ? '800' : st.weight}">
+        font-size="12" font-family="'Fredoka',system-ui,sans-serif"
+        fill="${isSelected ? '#1f5a3e' : st.text}"
+        font-weight="${isSelected ? '700' : st.weight}">
         ${ICON[status]}${label}
       </text>
     </g>`;
