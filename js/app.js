@@ -10,13 +10,24 @@ import { applyMultiColumnOperation } from './engine/multicolumn.js';
 import {
   renderApp, renderAfterSubmit, renderExercise,
   renderDashboard, renderAttemptLog, renderSequencePanel, renderFocusedCol,
-  renderSkillTree, renderViz, renderAppMode, renderFlashAnzan,
+  renderSkillTree, renderViz, renderAppMode, renderFlashAnzan, renderDaily,
+  renderAchievements, openCertificate, closeCertificate,
 } from './ui/render.js';
 import { bindEvents } from './ui/events.js';
 import {
   createInitialFlashAnzanState, serializableFlashAnzanState,
   startFlashRound, submitFlashAnswer, replayFlash, backToFlashIdle, cancelTimers,
 } from './ui/flashAnzan.js';
+import {
+  createInitialDailyState, serializableDailyState,
+  startDailyRun, submitDailyAnswer, backToDailyIdle,
+} from './ui/daily.js';
+import { computeStreak } from './trainer/daily.js';
+import { formatDailyShare, formatFlashShare } from './trainer/shareCard.js';
+import { copyText, showToast } from './ui/clipboard.js';
+import {
+  evaluateNewAchievements, getAchievement, createInitialAchievementsState,
+} from './trainer/achievements.js';
 
 let state = loadAppState() ?? createInitialAppState();
 
@@ -28,17 +39,52 @@ state.hintsVisible  ??= true;
 state.focusedCol    ??= 0;
 state.vizMode       ??= 'grid';
 state.flashAnzan      = serializableFlashAnzanState(state.flashAnzan ?? createInitialFlashAnzanState());
+state.daily           = serializableDailyState(state.daily ?? createInitialDailyState());
+state.achievements    = state.achievements ?? createInitialAchievementsState();
+state.achievements.unlocked ??= {};
 
 state.progress = migrateLockedToLearning(state.progress);
 state.progress = applyRustyDecay(state.progress);
 
-// Persist state. Flash anzan runtime (timers, in-flight phase) is stripped —
-// only stats survive a reload.
+// Retroactive evaluation — silently unlocks achievements that already
+// qualify from prior progress (e.g. when this feature ships to existing users).
+// No toasts here — only newly earned ones during gameplay should announce.
+(function backfillAchievements() {
+  const newly = evaluateNewAchievements(state);
+  if (!newly.length) return;
+  const now = Date.now();
+  const next = { ...state.achievements.unlocked };
+  for (const id of newly) next[id] = now;
+  state.achievements = { ...state.achievements, unlocked: next };
+})();
+
+// Persist state. Flash anzan and daily runtime (timers, in-flight phase) is
+// stripped — only saved stats/results survive a reload.
 function persist() {
-  saveAppState({ ...state, flashAnzan: serializableFlashAnzanState(state.flashAnzan) });
+  saveAppState({
+    ...state,
+    flashAnzan: serializableFlashAnzanState(state.flashAnzan),
+    daily:      serializableDailyState(state.daily),
+  });
 }
 
 // ── Status transitions ────────────────────────────────────────────────────────
+
+// Re-evaluate achievement predicates, record any newly unlocked ones, and
+// surface them as toasts. Returns the newly unlocked id list.
+function checkAchievements() {
+  const newly = evaluateNewAchievements(state);
+  if (!newly.length) return newly;
+  const now = Date.now();
+  const next = { ...state.achievements.unlocked };
+  for (const id of newly) next[id] = now;
+  state.achievements = { ...state.achievements, unlocked: next };
+  for (const id of newly) {
+    const a = getAchievement(id);
+    if (a) showToast(`${a.icon} ${a.label} unlocked`, 2400);
+  }
+  return newly;
+}
 
 function applyStatusTransitions() {
   const id = state.selectedSkillId;
@@ -113,12 +159,14 @@ function onSubmit() {
   state.progress = updateProgress(state.progress, attempt);
 
   applyStatusTransitions();
+  checkAchievements();
   persist();
 
   renderAfterSubmit(state);
   renderSkillTree(state);
   renderDashboard(state);
   renderAttemptLog(state);
+  renderAchievements(state);
 }
 
 function onNext() {
@@ -230,16 +278,20 @@ function onVizChange(mode) {
 // ── App-mode (practice / flash anzan) ─────────────────────────────────────────
 
 function onAppModeChange(mode) {
-  if (mode !== 'practice' && mode !== 'flash') return;
+  if (mode !== 'practice' && mode !== 'flash' && mode !== 'daily') return;
   if (state.appMode === mode) return;
   if (state.appMode === 'flash') {
     cancelTimers(state);
     state.flashAnzan = { ...state.flashAnzan, phase: 'idle', timers: [] };
   }
+  if (state.appMode === 'daily') {
+    state.daily = { ...state.daily, phase: 'idle', problems: [], idx: 0, perAnswer: [] };
+  }
   state.appMode = mode;
   persist();
   renderAppMode(state);
   renderFlashAnzan(state);
+  renderDaily(state);
 }
 
 // ── Flash Anzan handlers ──────────────────────────────────────────────────────
@@ -252,7 +304,9 @@ function onFlashStart(presetKey) {
 function onFlashSubmit() {
   const raw = document.getElementById('fa-answer')?.value ?? '';
   submitFlashAnswer(state, raw, () => {
+    checkAchievements();
     renderFlashAnzan(state);
+    renderAchievements(state);
     persist();
   });
 }
@@ -266,6 +320,53 @@ function onFlashBack() {
   persist();
 }
 
+// ── Daily Challenge handlers ──────────────────────────────────────────────────
+
+function onDailyStart() {
+  if (state.appMode !== 'daily') return;
+  startDailyRun(state, () => renderDaily(state));
+}
+
+function onDailySubmit() {
+  const raw = document.getElementById('dc-answer')?.value ?? '';
+  submitDailyAnswer(state, raw, () => {
+    checkAchievements();
+    renderDaily(state);
+    renderAchievements(state);
+    persist();
+  });
+}
+
+function onDailyBack() {
+  backToDailyIdle(state, () => renderDaily(state));
+  persist();
+}
+
+// ── Certificate handlers ─────────────────────────────────────────────────────
+
+function onCertOpen()  { openCertificate(state); }
+function onCertClose() { closeCertificate(); }
+function onCertPrint() { window.print(); }
+
+// ── Share-card handler (Daily + Flash) ────────────────────────────────────────
+
+function onShare(kind) {
+  let text = '';
+  if (kind === 'daily') {
+    const run = state.daily.results[state.daily.date];
+    if (!run) return;
+    const { current } = computeStreak(state.daily.results, run.date);
+    text = formatDailyShare(run, current);
+  } else if (kind === 'flash') {
+    const fa = state.flashAnzan;
+    if (!fa?.lastResult || !fa?.config) return;
+    const stats = fa.stats?.[fa.presetKey] ?? { played: 0, correct: 0, bestStreak: 0 };
+    text = formatFlashShare(fa.config.label, fa.config, fa.lastResult, stats);
+  }
+  if (!text) return;
+  copyText(text).then(ok => showToast(ok ? 'Copied to clipboard' : 'Copy failed'));
+}
+
 // ── Boot ──────────────────────────────────────────────────────────────────────
 
 bindEvents(
@@ -276,6 +377,9 @@ bindEvents(
     onColLeft, onColRight, onVizChange,
     onAppModeChange,
     onFlashStart, onFlashSubmit, onFlashReplay, onFlashBack,
+    onDailyStart, onDailySubmit, onDailyBack,
+    onShare,
+    onCertOpen, onCertClose, onCertPrint,
   },
   () => state,
 );

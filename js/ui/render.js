@@ -16,6 +16,8 @@ import {
   provisionalNoticeHTML,
 } from './views.js';
 import { flashAnzanHTML } from './flashAnzan.js';
+import { dailyHTML } from './daily.js';
+import { achievementsHTML, certificateHTML } from './achievements.js';
 import { applyOperation } from '../engine/operations.js';
 import { applyMultiColumnOperation } from '../engine/multicolumn.js';
 import { isMentalOnlySkill } from '../trainer/exercises.js';
@@ -32,15 +34,36 @@ export function renderApp(state) {
   renderDashboard(state);
   renderAttemptLog(state);
   renderFlashAnzan(state);
+  renderDaily(state);
+  renderAchievements(state);
 }
 
-/** Toggle visibility of the practice vs flash anzan layout and render the tabs. */
+export function renderAchievements(state) {
+  set('achievements-container', achievementsHTML(state));
+}
+
+export function openCertificate(state) {
+  set('cert-content', certificateHTML(state));
+  const modal = document.getElementById('cert-modal');
+  if (modal) modal.hidden = false;
+  document.body.classList.add('cert-open');
+}
+
+export function closeCertificate() {
+  const modal = document.getElementById('cert-modal');
+  if (modal) modal.hidden = true;
+  document.body.classList.remove('cert-open');
+}
+
+/** Toggle visibility of the practice / flash anzan / daily layouts and render the tabs. */
 export function renderAppMode(state) {
   set('app-mode-container', appModeTabsHTML(state.appMode));
   const practice = document.getElementById('practice-layout');
   const flash    = document.getElementById('flash-anzan-container');
+  const daily    = document.getElementById('daily-container');
   if (practice) practice.hidden = state.appMode !== 'practice';
   if (flash)    flash.hidden    = state.appMode !== 'flash';
+  if (daily)    daily.hidden    = state.appMode !== 'daily';
 }
 
 /** Re-render the entire flash anzan panel from its substate. */
@@ -48,6 +71,14 @@ export function renderFlashAnzan(state) {
   set('flash-anzan-container', flashAnzanHTML(state.flashAnzan));
   if (state.flashAnzan.phase === 'awaitingAnswer') {
     document.getElementById('fa-answer')?.focus();
+  }
+}
+
+/** Re-render the entire daily challenge panel from its substate. */
+export function renderDaily(state) {
+  set('daily-container', dailyHTML(state.daily));
+  if (state.daily.phase === 'playing') {
+    document.getElementById('dc-answer')?.focus();
   }
 }
 
@@ -114,7 +145,7 @@ export function renderFeedback(state) {
 }
 
 export function renderDashboard(state) {
-  set('dashboard-container', dashboardHTML(state.progress));
+  set('dashboard-container', dashboardHTML(state.progress, state.attemptLog));
 }
 
 export function renderAttemptLog(state) {

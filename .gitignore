@@ -1,2 +1,8 @@
 POC.md
 tasks/game-logic.md
+node_modules/
+test-results/
+playwright-report/
+playwright/.cache/
+.env
+.env.local

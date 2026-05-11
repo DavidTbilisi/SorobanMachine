@@ -3,6 +3,7 @@ import { getAllSkills, getRecommendationHint } from '../trainer/skills.js';
 import { getMasteryBlockers } from '../trainer/gates.js';
 import { isMentalOnlySkill } from '../trainer/exercises.js';
 import { operationTokenToLabel, sequenceToLabels } from '../keyboard/shortcuts.js';
+import { accuracySparklineSVG, latencySparklineSVG } from './charts.js';
 
 // ── App-mode tabs ─────────────────────────────────────────────────────────────
 
@@ -12,7 +13,8 @@ export function appModeTabsHTML(appMode) {
        ${label}<span class="mode-tab-hint">${hint}</span>
      </button>`;
   return `${tab('practice', 'Practice', 'structured skill tree')}
-          ${tab('flash',    'Flash Anzan', 'speed sum challenge')}`;
+          ${tab('flash',    'Flash Anzan', 'speed sum challenge')}
+          ${tab('daily',    'Daily Challenge', 'same set, every day')}`;
 }
 
 // ── Skill selector ────────────────────────────────────────────────────────────
@@ -733,11 +735,17 @@ function sequenceFeedbackHTML(userSeq, expectedSeq) {
 
 // ── Dashboard ─────────────────────────────────────────────────────────────────
 
-export function dashboardHTML(progress) {
+export function dashboardHTML(progress, attemptLog = []) {
+  // Bucket attempts by skill once so each row doesn't re-scan the log.
+  const bySkill = {};
+  for (const a of attemptLog) (bySkill[a.skillId] ??= []).push(a);
+
   return `<table class="dashboard-table">
     <thead><tr>
       <th>Skill</th><th>License</th>
-      <th>Att.</th><th>Acc.</th><th>Latency</th><th>Supp.Dep.</th><th>Gate</th>
+      <th>Att.</th><th>Acc.</th><th>Latency</th><th>Supp.Dep.</th>
+      <th class="trend-col">Trend</th>
+      <th>Gate</th>
     </tr></thead>
     <tbody>
       ${getAllSkills().map(skill => {
@@ -748,6 +756,7 @@ export function dashboardHTML(progress) {
           : p.status === STATUS.MASTERED    ? 'row-mastered'
           : p.status === STATUS.PROVISIONAL ? 'row-provisional'
           : p.status === STATUS.RUSTY       ? 'row-rusty' : '';
+        const skillAttempts = bySkill[skill.id] ?? [];
         return `<tr class="${rowClass}">
           <td>${skill.label}${!skill.implemented ? ' <em>(soon)</em>' : ''}</td>
           <td>${LICENSE[p.status] ?? '—'}</td>
@@ -755,6 +764,10 @@ export function dashboardHTML(progress) {
           <td>${p.accuracy}%</td>
           <td>${p.avgLatencyMs ? p.avgLatencyMs + 'ms' : '—'}</td>
           <td>${p.avgSupportDependency || '—'}</td>
+          <td class="trend-cell">
+            <div class="trend-row"><span class="trend-dot trend-acc" title="Accuracy"></span>${accuracySparklineSVG(skillAttempts)}</div>
+            <div class="trend-row"><span class="trend-dot trend-lat" title="Latency"></span>${latencySparklineSVG(skillAttempts)}</div>
+          </td>
           <td class="gate-cell">${isMastered ? '<span class="pass">All gates passed</span>'
             : checks.map(c => `<span class="${c.pass ? 'pass' : 'fail'}">${c.metric}: ${c.message}</span>`).join(' &nbsp; ')}</td>
         </tr>`;

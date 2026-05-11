@@ -4,7 +4,17 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Running the app
 
-Open `index.html` directly in a browser. No build step, no server, no npm, no dependencies.
+Open `index.html` directly in a browser. The runtime has **no build step, no dependencies, no framework** — pure static HTML/CSS/ES-module JS.
+
+A `package.json` exists only to carry **dev-time tooling** for tests:
+
+| Command | What it does |
+|---|---|
+| `node tests/smoke.mjs` (or `npm test`) | Node-runnable unit/smoke tests for the pure modules (engine, trainer, scoring, view helpers). No browser. |
+| `npm run serve` | Starts a tiny dependency-free static server (`scripts/serve.mjs`) on `http://localhost:5173`. |
+| `npm run test:e2e` | Playwright e2e suite under `tests/e2e/` — drives a real Chromium against the served app. Covers Daily, Flash, Practice smoke, achievements, certificate, and share-card clipboard contents. |
+
+Playwright is the only npm dep. First-time setup: `npm install && npx playwright install chromium`.
 
 ## Architecture layers
 

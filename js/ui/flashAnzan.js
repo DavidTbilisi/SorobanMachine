@@ -121,6 +121,7 @@ function resultHTML(fa) {
     <div class="fa-meta">${presetLabel} · streak ${st.streak} · ${acc}% over ${st.played}</div>
     <div class="fa-btn-row">
       <button id="fa-replay" class="fa-btn fa-btn-primary">Try again [Enter]</button>
+      <button data-share="flash" class="fa-btn">📋 Share</button>
       <button id="fa-back"   class="fa-btn">Change settings</button>
     </div>
   </div>`;

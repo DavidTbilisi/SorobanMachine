@@ -19,6 +19,21 @@ export function bindEvents(handlers, getState) {
     if (e.target.id === 'fa-back')   { handlers.onFlashBack();   return; }
     if (e.target.id === 'fa-cancel') { handlers.onFlashBack();   return; }
 
+    // ── Daily challenge controls ─────────────────────────────────────────────
+    if (e.target.id === 'dc-start')  { handlers.onDailyStart();  return; }
+    if (e.target.id === 'dc-submit') { handlers.onDailySubmit(); return; }
+    if (e.target.id === 'dc-back')   { handlers.onDailyBack();   return; }
+
+    // ── Share buttons (Daily / Flash result screens) ─────────────────────────
+    const shareBtn = e.target.closest('[data-share]');
+    if (shareBtn?.dataset.share) { handlers.onShare(shareBtn.dataset.share); return; }
+
+    // ── Certificate modal ────────────────────────────────────────────────────
+    if (e.target.id === 'cert-open')  { handlers.onCertOpen();  return; }
+    if (e.target.id === 'cert-close') { handlers.onCertClose(); return; }
+    if (e.target.id === 'cert-print') { handlers.onCertPrint(); return; }
+    if (e.target.classList?.contains('cert-backdrop')) { handlers.onCertClose(); return; }
+
     // ── Practice controls ────────────────────────────────────────────────────
     if (e.target.id === 'btn-submit') handlers.onSubmit();
     if (e.target.id === 'btn-next')   handlers.onNext();
@@ -40,6 +55,27 @@ export function bindEvents(handlers, getState) {
 
   document.addEventListener('keydown', e => {
     const state = getState();
+
+    // ── Daily challenge key handling (when active) ───────────────────────────
+    if (state.appMode === 'daily') {
+      const phase = state.daily.phase;
+      if (e.key === 'Escape') {
+        if (phase !== 'idle') { e.preventDefault(); handlers.onDailyBack(); }
+        return;
+      }
+      if (phase === 'idle' && (e.key === 'Enter' || e.key === ' ')) {
+        if (document.activeElement?.tagName !== 'INPUT') {
+          e.preventDefault(); handlers.onDailyStart(); return;
+        }
+      }
+      if (phase === 'playing' && e.key === 'Enter') {
+        e.preventDefault(); handlers.onDailySubmit(); return;
+      }
+      if (phase === 'result' && e.key === 'Enter') {
+        e.preventDefault(); handlers.onDailyBack(); return;
+      }
+      return;
+    }
 
     // ── Flash anzan key handling (when active) ───────────────────────────────
     if (state.appMode === 'flash') {

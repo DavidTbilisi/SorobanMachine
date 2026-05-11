@@ -3,7 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#a0c898">
   <title>Soroban Machine</title>
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="icon" type="image/svg+xml" href="./icon.svg">
+  <link rel="apple-touch-icon" href="./icon.svg">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -44,6 +48,15 @@
 
   <div id="flash-anzan-container" class="flash-anzan-panel" hidden></div>
 
+  <div id="daily-container" class="daily-panel" hidden></div>
+
+  <hr>
+
+  <details open>
+    <summary><strong>Achievements</strong></summary>
+    <div id="achievements-container"></div>
+  </details>
+
   <hr>
 
   <details open>
@@ -62,6 +75,18 @@
 
   <button id="btn-reset">Reset All Progress</button>
 
+  <div id="cert-modal" class="cert-modal" hidden>
+    <div class="cert-backdrop"></div>
+    <div class="cert-content" id="cert-content"></div>
+  </div>
+
   <script type="module" src="./js/app.js"></script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js').catch(() => {});
+      });
+    }
+  </script>
 </body>
 </html>
