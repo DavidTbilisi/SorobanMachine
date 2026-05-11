@@ -40,34 +40,34 @@
 
 body {
   font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
-  font-size: 14px;
-  line-height: 1.5;
+  font-size: 13px;
+  line-height: 1.4;
   max-width: 1140px;
-  margin: 28px auto;
-  padding: 0 20px;
+  margin: 14px auto;
+  padding: 0 16px;
   background: var(--bg);
   color: var(--text);
 }
 
 h1 {
-  font-size: 1.35rem;
+  font-size: 1.15rem;
   font-weight: 700;
   letter-spacing: -0.02em;
-  margin: 0 0 20px;
+  margin: 0 0 12px;
   color: var(--text);
 }
 
 hr {
   border: none;
   border-top: 1px solid var(--border);
-  margin: 20px 0;
+  margin: 12px 0;
 }
 
 /* ── Selectors row ───────────────────────────────────────────────────────────── */
 
 .selectors-row {
   display: flex;
-  gap: 14px;
+  gap: 8px;
   flex-wrap: wrap;
   align-items: flex-start;
 }
@@ -75,11 +75,11 @@ hr {
 fieldset {
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  padding: 10px 14px 12px;
+  padding: 6px 10px 8px;
   margin: 0;
   background: var(--surface);
   box-shadow: var(--shadow);
-  min-width: 220px;
+  min-width: 180px;
 }
 
 legend {
@@ -133,26 +133,26 @@ select:focus { outline: 2px solid var(--primary); outline-offset: 1px; }
 /* ── Exercise panel ──────────────────────────────────────────────────────────── */
 
 .exercise-meta {
-  margin: 0 0 6px;
+  margin: 0 0 4px;
   color: var(--text-muted);
-  font-size: 12px;
+  font-size: 11px;
 }
 
 .prompt {
-  font-size: 2.2rem;
+  font-size: 1.75rem;
   font-weight: 700;
   letter-spacing: 0.04em;
-  margin: 10px 0 14px;
+  margin: 6px 0 10px;
   color: var(--primary);
   font-variant-numeric: tabular-nums;
 }
 
 input[type="text"] {
   font-family: ui-monospace, "Cascadia Code", monospace;
-  font-size: 1.15rem;
-  padding: 7px 12px;
-  width: 140px;
-  margin-right: 8px;
+  font-size: 1rem;
+  padding: 5px 10px;
+  width: 120px;
+  margin-right: 6px;
   border: 1px solid var(--border-dark);
   border-radius: var(--radius-sm);
   background: var(--surface);
@@ -168,8 +168,8 @@ input[type="text"]:focus {
 input[type="text"]:disabled { background: var(--surface-2); color: var(--text-faint); }
 
 button {
-  padding: 7px 16px;
-  margin: 0 6px 0 0;
+  padding: 5px 12px;
+  margin: 0 5px 0 0;
   font-family: inherit;
   font-size: 13px;
   font-weight: 500;
@@ -203,7 +203,7 @@ button:disabled { opacity: 0.4; cursor: default; box-shadow: none; }
 
 .exercise-row {
   display: flex;
-  gap: 24px;
+  gap: 16px;
   align-items: flex-start;
   flex-wrap: wrap;
 }
@@ -214,7 +214,7 @@ button:disabled { opacity: 0.4; cursor: default; box-shadow: none; }
 
 .number-grid {
   display: inline-block;
-  padding: 12px 14px;
+  padding: 8px 10px;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius);
@@ -222,16 +222,16 @@ button:disabled { opacity: 0.4; cursor: default; box-shadow: none; }
 }
 .grid-label {
   font-weight: 600;
-  font-size: 13px;
-  margin-bottom: 8px;
+  font-size: 12px;
+  margin-bottom: 5px;
   color: var(--text);
   font-variant-numeric: tabular-nums;
 }
 .grid-legend {
   display: flex;
-  gap: 14px;
-  margin-top: 8px;
-  font-size: 11px;
+  gap: 10px;
+  margin-top: 5px;
+  font-size: 10px;
   color: var(--text-muted);
 }
 .grid-key { display: inline-flex; align-items: center; gap: 5px; }
@@ -247,8 +247,8 @@ button:disabled { opacity: 0.4; cursor: default; box-shadow: none; }
 
 /* ── Soroban SVG ─────────────────────────────────────────────────────────────── */
 
-#soroban-state { margin: 14px 0; }
-#soroban-state.multi-col { display: flex; gap: 36px; align-items: flex-start; }
+#soroban-state { margin: 8px 0; }
+#soroban-state.multi-col { display: flex; gap: 24px; align-items: flex-start; }
 
 .soroban-group { display: flex; flex-direction: column; gap: 6px; }
 .soroban-group-label {
@@ -261,7 +261,7 @@ button:disabled { opacity: 0.4; cursor: default; box-shadow: none; }
 
 .soroban-cols {
   display: flex;
-  gap: 14px;
+  gap: 10px;
   align-items: flex-start;
 }
 
@@ -288,16 +288,16 @@ button:disabled { opacity: 0.4; cursor: default; box-shadow: none; }
   padding: 4px;
 }
 
-.soroban-placeholder { width: 70px; }
+.soroban-placeholder { width: 64px; }
 .soroban-placeholder-box {
-  width: 70px;
-  height: 220px;
+  width: 64px;
+  height: 174px;
   display: flex;
   align-items: center;
   justify-content: center;
   border: 2px dashed var(--border-dark);
   border-radius: var(--radius-sm);
-  font-size: 2rem;
+  font-size: 1.5rem;
   color: var(--text-faint);
   background: var(--surface-2);
 }
@@ -306,25 +306,25 @@ button:disabled { opacity: 0.4; cursor: default; box-shadow: none; }
 
 #hints {
   display: inline-block;
-  margin: 8px 0;
-  padding: 6px 14px;
+  margin: 4px 0;
+  padding: 4px 10px;
   background: var(--amber-bg);
   border: 1px solid var(--amber-border);
   border-radius: var(--radius-sm);
-  font-size: 13px;
+  font-size: 12px;
   color: #78350f;
 }
 
 /* ── Feedback ────────────────────────────────────────────────────────────────── */
 
 #feedback {
-  margin: 12px 0;
-  padding: 12px 16px;
+  margin: 8px 0;
+  padding: 8px 12px;
   border: 1.5px solid var(--border);
   background: var(--surface);
   border-radius: var(--radius);
   box-shadow: var(--shadow);
-  font-size: 13px;
+  font-size: 12px;
 }
 #feedback.correct   { border-color: var(--green-border); background: var(--green-bg); }
 #feedback.incorrect { border-color: var(--red-border);   background: var(--red-bg);   }
@@ -335,13 +335,13 @@ button:disabled { opacity: 0.4; cursor: default; box-shadow: none; }
 /* ── Provisional notice ──────────────────────────────────────────────────────── */
 
 .notice-provisional {
-  margin: 10px 0;
-  padding: 10px 16px;
+  margin: 6px 0;
+  padding: 6px 12px;
   background: var(--blue-bg);
   border: 1px solid var(--blue-border);
   border-radius: var(--radius);
   color: var(--blue-text);
-  font-size: 13px;
+  font-size: 12px;
 }
 
 /* ── Dashboard table ─────────────────────────────────────────────────────────── */
@@ -387,17 +387,17 @@ thead th {
 
 .keyboard-legend {
   display: inline-block;
-  margin: 8px 0 12px;
-  padding: 10px 14px;
+  margin: 4px 0 8px;
+  padding: 6px 10px;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  font-size: 12px;
+  font-size: 11px;
   box-shadow: var(--shadow);
   color: var(--text-muted);
 }
 
-.legend-row { margin-bottom: 5px; }
+.legend-row { margin-bottom: 3px; }
 .legend-row:last-child { margin-bottom: 0; }
 
 .legend-key {
@@ -476,10 +476,63 @@ kbd {
 
 .btn-row {
   display: flex;
-  gap: 8px;
+  gap: 6px;
   align-items: center;
-  margin-top: 10px;
+  margin-top: 8px;
   flex-wrap: wrap;
+}
+
+/* ── App layout (tree sidebar + practice main) ───────────────────────────────── */
+
+.app-layout {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+}
+
+.tree-panel {
+  flex: 0 0 auto;
+}
+
+.practice-panel {
+  flex: 1 1 340px;
+  min-width: 0;
+}
+
+/* ── Skill tree ───────────────────────────────────────────────────────────────── */
+
+.skill-tree-wrap {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 8px;
+  display: inline-block;
+}
+
+.skill-tree-tracks {
+  display: flex;
+  justify-content: space-around;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-faint);
+  margin-bottom: 4px;
+  padding: 0 10px;
+}
+
+.skill-tree-svg {
+  display: block;
+  max-width: 100%;
+}
+
+.skill-node rect {
+  transition: stroke 0.15s, stroke-width 0.15s;
+}
+.skill-node:hover rect {
+  stroke: var(--primary-dim);
+  stroke-width: 2;
 }
 
 /* ── Misc ────────────────────────────────────────────────────────────────────── */
@@ -495,10 +548,10 @@ details {
 
 summary {
   cursor: pointer;
-  padding: 10px 14px;
+  padding: 7px 12px;
   user-select: none;
   font-weight: 600;
-  font-size: 13px;
+  font-size: 12px;
   color: var(--text);
   background: var(--surface-2);
   border-bottom: 1px solid var(--border);
@@ -506,7 +559,7 @@ summary {
 summary::-webkit-details-marker { color: var(--text-muted); }
 
 details[open] summary { border-bottom-color: var(--border); }
-details > div { padding: 12px 14px; }
+details > div { padding: 8px 10px; }
 
 #btn-reset {
   color: var(--red);

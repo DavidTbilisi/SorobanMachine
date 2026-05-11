@@ -97,13 +97,13 @@ function sorobanSVG(value) {
   const upper = value >= 5 ? 1 : 0;
   const lower = value % 5;
 
-  const W = 70, H = 220, cx = 35;
+  const W = 64, H = 174, cx = 32;
   const rx = 13, ry = 9;
-  const beamY = 88;
-  const beadGap = 27;
-  const bottomBase = H - 16;
+  const beamY = 70;
+  const beadGap = 22;
+  const bottomBase = H - 14;
 
-  const upperCY = upper === 1 ? beamY - ry - 3 : 20;
+  const upperCY = upper === 1 ? beamY - ry - 3 : 16;
 
   const beads = [];
   for (let i = 0; i < lower; i++)
@@ -111,16 +111,48 @@ function sorobanSVG(value) {
   for (let j = (4 - lower) - 1; j >= 0; j--)
     beads.push({ cy: bottomBase - j * beadGap, active: false });
 
-  const ACTIVE = '#2b6cb0', INACTIVE = '#bee3f8', STROKE = '#1a365d', BEAM = '#b7791f';
-  const bead = (cy, active) =>
-    `<ellipse cx="${cx}" cy="${cy}" rx="${rx}" ry="${ry}" fill="${active ? ACTIVE : INACTIVE}" stroke="${STROKE}" stroke-width="1.5"/>`;
+  const bead = (cy, active) => {
+    const fill   = active ? 'url(#sg-active)'   : 'url(#sg-inactive)';
+    const stroke = active ? '#1e3a8a' : '#93c5fd';
+    const glow   = active ? `<ellipse cx="${cx - rx*0.28}" cy="${cy - ry*0.32}" rx="${rx*0.28}" ry="${ry*0.22}" fill="rgba(255,255,255,0.45)"/>` : '';
+    return `<ellipse cx="${cx}" cy="${cy}" rx="${rx}" ry="${ry}" fill="${fill}" stroke="${stroke}" stroke-width="0.8" filter="url(#sg-drop)"/>
+    ${glow}`;
+  };
 
   return `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" class="soroban-svg">
-    <line x1="${cx}" y1="6" x2="${cx}" y2="${H - 10}" stroke="#bbb" stroke-width="3" stroke-linecap="round"/>
-    <rect x="4" y="${beamY - 5}" width="${W - 8}" height="10" fill="${BEAM}" rx="4"/>
+    <defs>
+      <radialGradient id="sg-active" cx="35%" cy="28%" r="68%" gradientUnits="objectBoundingBox">
+        <stop offset="0%"   stop-color="#93c5fd"/>
+        <stop offset="42%"  stop-color="#2563eb"/>
+        <stop offset="100%" stop-color="#1e3a8a"/>
+      </radialGradient>
+      <radialGradient id="sg-inactive" cx="35%" cy="28%" r="68%" gradientUnits="objectBoundingBox">
+        <stop offset="0%"   stop-color="#ffffff"/>
+        <stop offset="45%"  stop-color="#bfdbfe"/>
+        <stop offset="100%" stop-color="#7fb3e8"/>
+      </radialGradient>
+      <linearGradient id="sg-rod" x1="${cx-2}" y1="0" x2="${cx+2}" y2="0" gradientUnits="userSpaceOnUse">
+        <stop offset="0%"   stop-color="#94a3b8"/>
+        <stop offset="38%"  stop-color="#e8edf5"/>
+        <stop offset="100%" stop-color="#64748b"/>
+      </linearGradient>
+      <linearGradient id="sg-beam" x1="0" y1="${beamY-5}" x2="0" y2="${beamY+5}" gradientUnits="userSpaceOnUse">
+        <stop offset="0%"   stop-color="#fde68a"/>
+        <stop offset="45%"  stop-color="#d97706"/>
+        <stop offset="100%" stop-color="#92400e"/>
+      </linearGradient>
+      <filter id="sg-drop" x="-25%" y="-25%" width="150%" height="150%">
+        <feDropShadow dx="0" dy="1.5" stdDeviation="1.2" flood-color="rgba(0,0,0,0.28)"/>
+      </filter>
+      <filter id="sg-beam-shadow" x="-5%" y="-30%" width="110%" height="160%">
+        <feDropShadow dx="0" dy="1" stdDeviation="1" flood-color="rgba(0,0,0,0.2)"/>
+      </filter>
+    </defs>
+    <rect x="${cx-2}" y="4" width="4" height="${H-12}" fill="url(#sg-rod)" rx="2"/>
+    <rect x="4" y="${beamY-5}" width="${W-8}" height="10" fill="url(#sg-beam)" rx="3.5" filter="url(#sg-beam-shadow)"/>
     ${bead(upperCY, upper === 1)}
     ${beads.map(b => bead(b.cy, b.active)).join('\n    ')}
-    <text x="${cx}" y="${H - 2}" text-anchor="middle" font-size="12" fill="#555" font-family="monospace">${value}</text>
+    <text x="${cx}" y="${H-1}" text-anchor="middle" font-size="11" fill="#64748b" font-family="monospace" font-weight="600">${value}</text>
   </svg>`;
 }
 
@@ -213,7 +245,7 @@ export function numberGridHTML(exercise, supportLevel) {
   const { startValue, amount, direction } = exercise;
   if (typeof startValue !== 'number' || typeof amount !== 'number') return '';
 
-  const CELL = 18, GAP = 2, COLS = 10, ROWS = 10;
+  const CELL = 14, GAP = 2, COLS = 10, ROWS = 10;
   const PAD = 2;
   const W = COLS * (CELL + GAP) - GAP + PAD * 2;
   const H = ROWS * (CELL + GAP) - GAP + PAD * 2;
@@ -223,8 +255,7 @@ export function numberGridHTML(exercise, supportLevel) {
   const EMPTY_STROKE = '#cbd5e0';
 
   const aCount = Math.max(0, Math.min(100, startValue));
-  const aRows  = aCount === 0 ? 0 : Math.ceil(aCount / 10);
-  const bStart = aRows * 10;
+  const bStart = aCount;
   const bCount = Math.max(0, Math.min(amount, 100 - bStart));
 
   const cells = [];
@@ -409,6 +440,103 @@ export function attemptLogHTML(attemptLog) {
       </tr>`).join('\n')}
     </tbody>
   </table>`;
+}
+
+// ── Skill tree node map ───────────────────────────────────────────────────────
+
+export function skillTreeHTML(progress, selectedSkillId) {
+  const skills = getAllSkills();
+
+  const NODE_W = 136, NODE_H = 30, RX = 8;
+  const LEFT = 118, RIGHT = 362, MID = 240, SVG_W = 480;
+  const ROW = 54;
+
+  const POS = {
+    direct_add_1_4:           { x: LEFT,  y: 28       },
+    direct_subtract_1_4:      { x: RIGHT, y: 28       },
+    five_complement_add:      { x: LEFT,  y: 28+ROW   },
+    five_complement_subtract: { x: RIGHT, y: 28+ROW   },
+    ten_complement_add:       { x: LEFT,  y: 28+ROW*2 },
+    ten_complement_subtract:  { x: RIGHT, y: 28+ROW*2 },
+    carry:                    { x: LEFT,  y: 28+ROW*3 },
+    borrow:                   { x: RIGHT, y: 28+ROW*3 },
+    two_digit_add:            { x: LEFT,  y: 28+ROW*4 },
+    two_digit_subtract:       { x: RIGHT, y: 28+ROW*4 },
+    two_digit_mixed:          { x: MID,   y: 28+ROW*5 },
+    ghost_mode:               { x: MID,   y: 28+ROW*6 },
+    still_hands:              { x: MID,   y: 28+ROW*7 },
+    mental_only:              { x: MID,   y: 28+ROW*8 },
+  };
+
+  const SVG_H = 28 + ROW * 8 + 28;
+
+  const SHORT = {
+    direct_add_1_4:           'Direct Add 1–4',
+    direct_subtract_1_4:      'Direct Sub 1–4',
+    five_complement_add:      '5-Comp Add',
+    five_complement_subtract: '5-Comp Sub',
+    ten_complement_add:       '10-Comp Add',
+    ten_complement_subtract:  '10-Comp Sub',
+    carry:                    'Carry (2-col)',
+    borrow:                   'Borrow (2-col)',
+    two_digit_add:            '2-Digit Add',
+    two_digit_subtract:       '2-Digit Sub',
+    two_digit_mixed:          'Mixed 2-Digit',
+    ghost_mode:               'Ghost Mode',
+    still_hands:              'Still Hands',
+    mental_only:              'Mental Soroban',
+  };
+
+  const STYLE = {
+    locked:      { fill: '#f3f4f6', stroke: '#d1d5db', text: '#9ca3af', weight: '400' },
+    learning:    { fill: '#eff6ff', stroke: '#93c5fd', text: '#1d4ed8', weight: '500' },
+    provisional: { fill: '#f5f3ff', stroke: '#a78bfa', text: '#6d28d9', weight: '500' },
+    mastered:    { fill: '#f0fdf4', stroke: '#4ade80', text: '#15803d', weight: '600' },
+    rusty:       { fill: '#fffbeb', stroke: '#fbbf24', text: '#b45309', weight: '500' },
+  };
+
+  const ICON = { locked: '', learning: '', provisional: '◑ ', mastered: '✓ ', rusty: '⚠ ' };
+
+  const edges = skills.flatMap(skill =>
+    skill.prerequisites.map(prereqId => {
+      const f = POS[prereqId], t = POS[skill.id];
+      const fy = f.y + NODE_H / 2, ty = t.y - NODE_H / 2;
+      const mid = (fy + ty) / 2;
+      return `<path d="M ${f.x} ${fy} C ${f.x} ${mid}, ${t.x} ${mid}, ${t.x} ${ty}"
+        fill="none" stroke="#d1d5db" stroke-width="2" stroke-linecap="round"/>`;
+    })
+  );
+
+  const nodes = skills.map(skill => {
+    const { x, y } = POS[skill.id];
+    const status = progress[skill.id]?.status ?? 'locked';
+    const st = STYLE[status] ?? STYLE.locked;
+    const isSelected = skill.id === selectedSkillId;
+    const label = SHORT[skill.id] ?? skill.label;
+
+    return `<g class="skill-node" data-skill-id="${skill.id}" style="cursor:pointer">
+      <rect x="${x - NODE_W / 2}" y="${y - NODE_H / 2}" width="${NODE_W}" height="${NODE_H}" rx="${RX}"
+        fill="${st.fill}"
+        stroke="${isSelected ? '#4f46e5' : st.stroke}"
+        stroke-width="${isSelected ? 2.5 : 1.5}"/>
+      <text x="${x}" y="${y}" text-anchor="middle" dominant-baseline="middle"
+        font-size="12" font-family="system-ui,-apple-system,sans-serif"
+        fill="${isSelected ? '#4f46e5' : st.text}"
+        font-weight="${isSelected ? '700' : st.weight}">
+        ${ICON[status]}${label}
+      </text>
+    </g>`;
+  });
+
+  return `<div class="skill-tree-wrap">
+    <div class="skill-tree-tracks">
+      <span>Add track</span><span>Subtract track</span>
+    </div>
+    <svg viewBox="0 0 ${SVG_W} ${SVG_H}" width="${SVG_W}" class="skill-tree-svg">
+      ${edges.join('\n      ')}
+      ${nodes.join('\n      ')}
+    </svg>
+  </div>`;
 }
 
 // ── Provisional notice ────────────────────────────────────────────────────────

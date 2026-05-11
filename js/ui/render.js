@@ -1,5 +1,6 @@
 import {
   skillSelectorHTML,
+  skillTreeHTML,
   supportSelectorHTML,
   modeSelectorHTML,
   exercisePanelHTML,
@@ -22,9 +23,14 @@ export function renderApp(state) {
   set('skill-container',   skillSelectorHTML(state.progress, state.selectedSkillId));
   set('support-container', supportSelectorHTML(state.supportLevel));
   set('mode-container',    modeSelectorHTML(state.inputMode));
+  renderSkillTree(state);
   renderExercise(state);
   renderDashboard(state);
   renderAttemptLog(state);
+}
+
+export function renderSkillTree(state) {
+  set('skill-tree-container', skillTreeHTML(state.progress, state.selectedSkillId));
 }
 
 /** Re-renders the full exercise area (panel + soroban + hints + sequence + feedback). */

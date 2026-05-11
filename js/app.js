@@ -10,6 +10,7 @@ import { applyMultiColumnOperation } from './engine/multicolumn.js';
 import {
   renderApp, renderAfterSubmit, renderExercise,
   renderDashboard, renderAttemptLog, renderSequencePanel, renderFocusedCol,
+  renderSkillTree,
 } from './ui/render.js';
 import { bindEvents } from './ui/events.js';
 
@@ -102,6 +103,7 @@ function onSubmit() {
   saveAppState(state);
 
   renderAfterSubmit(state);
+  renderSkillTree(state);
   renderDashboard(state);
   renderAttemptLog(state);
 }
@@ -135,6 +137,7 @@ function onSkillChange(skillId) {
   state.inputSequence   = [];
   state.focusedCol      = 0;
   saveAppState(state);
+  renderSkillTree(state);
   renderExercise(state);
 }
 

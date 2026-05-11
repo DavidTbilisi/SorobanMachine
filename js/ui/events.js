@@ -11,6 +11,9 @@ export function bindEvents(handlers, getState) {
     if (e.target.id === 'btn-next')   handlers.onNext();
     if (e.target.id === 'btn-reset')  handlers.onReset();
     if (e.target.id === 'btn-undo')   handlers.onUndo();
+
+    const node = e.target.closest('.skill-node');
+    if (node?.dataset.skillId) handlers.onSkillChange(node.dataset.skillId);
   });
 
   document.addEventListener('change', e => {
