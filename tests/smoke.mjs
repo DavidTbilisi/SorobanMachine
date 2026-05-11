@@ -218,8 +218,8 @@ test('numberGrid: A and B cell counts match operands', () => {
       { startValue, amount, direction, skillId: 'two_digit_add' },
       0
     );
-    const aFills = countMatches(html, /fill="#ecc94b"/g);
-    const bFills = countMatches(html, /fill="#9f7aea"/g);
+    const aFills = countMatches(html, /fill="#d8a0a0"/g);
+    const bFills = countMatches(html, /fill="#a0c898"/g);
     assertEq(aFills, startValue, `A=${startValue} ${direction} ${amount}`);
     assertEq(bFills, amount,     `B=${amount} ${direction} ${amount}`);
   }
@@ -255,15 +255,15 @@ test('numberGrid: B starts on the row after A finishes', () => {
     { startValue: 10, amount: 3, direction: 'add', skillId: 'two_digit_add' },
     0
   );
-  assertEq(countMatches(html, /fill="#ecc94b"/g), 10);
-  assertEq(countMatches(html, /fill="#9f7aea"/g), 3);
+  assertEq(countMatches(html, /fill="#d8a0a0"/g), 10);
+  assertEq(countMatches(html, /fill="#a0c898"/g), 3);
   // A=9 fills 9 of row 0; B should still start at row 1, NOT row 0 col 9
   const html2 = viewsMod.numberGridHTML(
     { startValue: 9, amount: 5, direction: 'add', skillId: 'ten_complement_add' },
     0
   );
-  assertEq(countMatches(html2, /fill="#ecc94b"/g), 9);
-  assertEq(countMatches(html2, /fill="#9f7aea"/g), 5);
+  assertEq(countMatches(html2, /fill="#d8a0a0"/g), 9);
+  assertEq(countMatches(html2, /fill="#a0c898"/g), 5);
 });
 
 // ── Run ──────────────────────────────────────────────────────────────────────

@@ -235,8 +235,33 @@ export function sorobanStateHTML(exercise, lastAttempt, supportLevel, focusedCol
     const afterDigit = ((afterRaw % 10) + 10) % 10;
     const carryNeeded  = afterRaw >= 10;
     const borrowNeeded = afterRaw < 0;
+
+    // Carry case: widen to 2 rods so the carried 1 has somewhere to land.
+    if (carryNeeded) {
+      const afterTens = Math.floor(afterRaw / 10);
+      const placeholder = (label) => `<div class="soroban-col soroban-placeholder">
+              <div class="soroban-col-label">${label}</div>
+              <div class="soroban-placeholder-box">?</div>
+            </div>`;
+      const rod = (label, value) => `<div class="soroban-col">
+              <div class="soroban-col-label">${label}</div>
+              ${sorobanSVG(value)}
+            </div>`;
+      return `<div id="soroban-state" class="multi-col">
+        <div class="soroban-group">
+          <div class="soroban-group-label">Before</div>
+          <div class="soroban-cols">${rod('Tens', 0)}${rod('Ones', before)}</div>
+        </div>
+        <div class="soroban-group">
+          <div class="soroban-group-label">${showAfter ? 'After + carry' : 'After'}</div>
+          <div class="soroban-cols">${showAfter
+            ? rod('Tens', afterTens) + rod('Ones', afterDigit)
+            : placeholder('Tens') + placeholder('Ones')}</div>
+        </div>
+      </div>`;
+    }
+
     let afterLabel = 'After';
-    if (carryNeeded)  afterLabel += ' + carry';
     if (borrowNeeded) afterLabel += ' + borrow';
 
     return `<div id="soroban-state">
@@ -339,7 +364,10 @@ function renderGrid(startValue, amount, direction) {
   const W = COLS * (CELL + GAP) - GAP + PAD * 2;
   const H = ROWS * (CELL + GAP) - GAP + PAD * 2;
   const aCount = Math.max(0, Math.min(100, startValue));
-  const bStart = aCount;
+  // When B would cross a row boundary, skip the remainder of A's row so the
+  // wrap is visible — this is the carry/borrow moment in ten-complement.
+  const aRowEnd = Math.ceil(aCount / COLS) * COLS;
+  const bStart = (aCount + amount > aRowEnd) ? aRowEnd : aCount;
   const bCount = Math.max(0, Math.min(amount, 100 - bStart));
   const cells = [];
   for (let i = 0; i < COLS * ROWS; i++) {
@@ -565,7 +593,10 @@ export function numberGridHTML(exercise, supportLevel) {
   const EMPTY_STROKE = '#d4d0c8';
 
   const aCount = Math.max(0, Math.min(100, startValue));
-  const bStart = aCount;
+  // When B would cross a row boundary, skip the remainder of A's row so the
+  // wrap is visible — this is the carry/borrow moment in ten-complement.
+  const aRowEnd = Math.ceil(aCount / COLS) * COLS;
+  const bStart = (aCount + amount > aRowEnd) ? aRowEnd : aCount;
   const bCount = Math.max(0, Math.min(amount, 100 - bStart));
 
   const cells = [];
