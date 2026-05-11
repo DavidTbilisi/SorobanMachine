@@ -210,12 +210,18 @@ button:disabled { opacity: 0.35; cursor: default; box-shadow: none; }
 
 .exercise-row {
   display: flex;
-  gap: 16px;
+  gap: 24px;
   align-items: flex-start;
   flex-wrap: wrap;
 }
-.exercise-row > #exercise-container { flex: 1 1 300px; min-width: 260px; }
-.exercise-row > #grid-container     { flex: 0 0 auto; }
+.exercise-row > #exercise-container { flex: 1 1 260px; min-width: 240px; }
+.visuals-group {
+  display: flex;
+  flex-direction: row;
+  gap: 16px;
+  align-items: flex-start;
+  flex-wrap: nowrap;
+}
 
 /* ── 10×10 number grid ───────────────────────────────────────────────────────── */
 
