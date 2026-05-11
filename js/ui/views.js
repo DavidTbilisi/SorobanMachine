@@ -104,9 +104,10 @@ export function exercisePanelHTML(state) {
 
 // ── Soroban SVG visualization ─────────────────────────────────────────────────
 
-function sorobanSVG(value) {
-  const upper = value >= 5 ? 1 : 0;
-  const lower = value % 5;
+function sorobanSVG(value, labelOverride = null) {
+  const safe = Math.max(0, value | 0);
+  const upper = safe >= 5 ? 1 : 0;
+  const lower = safe % 5;
 
   // Layout constants
   const W = 68, H = 200, cx = 34;
@@ -220,7 +221,7 @@ function sorobanSVG(value) {
   ${bead(upperCY, upper === 1, true)}
   ${lowerBeads.map(b => bead(b.cy, b.active, false)).join('\n  ')}
 
-  <text x="${cx}" y="${LY}" text-anchor="middle" font-size="11" fill="#78746e" font-family="monospace" font-weight="700">${value}</text>
+  <text x="${cx}" y="${LY}" text-anchor="middle" font-size="11" fill="${labelOverride ? '#a85050' : '#78746e'}" font-family="monospace" font-weight="700">${labelOverride ?? safe}</text>
 </svg>`;
 }
 
@@ -236,16 +237,22 @@ export function sorobanStateHTML(exercise, lastAttempt, supportLevel, focusedCol
     const carryNeeded  = afterRaw >= 10;
     const borrowNeeded = afterRaw < 0;
 
-    // Carry case: widen to 2 rods so the carried 1 has somewhere to land.
-    if (carryNeeded) {
-      const afterTens = Math.floor(afterRaw / 10);
+    // Carry / borrow: widen to 2 rods so the carry has somewhere to land,
+    // or so the borrow's owed −1 is visible in the tens column.
+    if (carryNeeded || borrowNeeded) {
+      const afterTensValue = carryNeeded ? Math.floor(afterRaw / 10) : 0;
+      const afterTensLabel = borrowNeeded
+        ? '−' + Math.abs(Math.floor(afterRaw / 10))
+        : null;
+      const opLabel = carryNeeded ? 'After + carry' : 'After + borrow';
+
       const placeholder = (label) => `<div class="soroban-col soroban-placeholder">
               <div class="soroban-col-label">${label}</div>
               <div class="soroban-placeholder-box">?</div>
             </div>`;
-      const rod = (label, value) => `<div class="soroban-col">
+      const rod = (label, value, override = null) => `<div class="soroban-col">
               <div class="soroban-col-label">${label}</div>
-              ${sorobanSVG(value)}
+              ${sorobanSVG(value, override)}
             </div>`;
       return `<div id="soroban-state" class="multi-col">
         <div class="soroban-group">
@@ -253,16 +260,13 @@ export function sorobanStateHTML(exercise, lastAttempt, supportLevel, focusedCol
           <div class="soroban-cols">${rod('Tens', 0)}${rod('Ones', before)}</div>
         </div>
         <div class="soroban-group">
-          <div class="soroban-group-label">${showAfter ? 'After + carry' : 'After'}</div>
+          <div class="soroban-group-label">${showAfter ? opLabel : 'After'}</div>
           <div class="soroban-cols">${showAfter
-            ? rod('Tens', afterTens) + rod('Ones', afterDigit)
+            ? rod('Tens', afterTensValue, afterTensLabel) + rod('Ones', afterDigit)
             : placeholder('Tens') + placeholder('Ones')}</div>
         </div>
       </div>`;
     }
-
-    let afterLabel = 'After';
-    if (borrowNeeded) afterLabel += ' + borrow';
 
     return `<div id="soroban-state">
       <div class="soroban-cols">
@@ -272,7 +276,7 @@ export function sorobanStateHTML(exercise, lastAttempt, supportLevel, focusedCol
         </div>
         ${showAfter
           ? `<div class="soroban-col">
-               <div class="soroban-col-label">${afterLabel}</div>
+               <div class="soroban-col-label">After</div>
                ${sorobanSVG(afterDigit)}
              </div>`
           : `<div class="soroban-col soroban-placeholder">
