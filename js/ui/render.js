@@ -6,6 +6,7 @@ import {
   exercisePanelHTML,
   sorobanStateHTML,
   numberGridHTML,
+  vizHTML,
   keyboardLegendHTML,
   hintsHTML,
   feedbackHTML,
@@ -37,7 +38,7 @@ export function renderSkillTree(state) {
 export function renderExercise(state) {
   const numCols = state.currentExercise?.numCols ?? 1;
   set('exercise-container',  exercisePanelHTML(state));
-  set('grid-container',      numberGridHTML(state.currentExercise, state.supportLevel));
+  set('grid-container',      vizHTML(state.currentExercise, state.supportLevel, state.lastAttempt, state.vizMode));
   set('soroban-container',   sorobanStateHTML(state.currentExercise, state.lastAttempt, state.supportLevel, state.focusedCol));
   set('legend-container',    keyboardLegendHTML(state.inputMode, state.supportLevel, state.hintsVisible, numCols, state.currentExercise?.skillId));
   set('hints-container',     hintsHTML(state.currentExercise, state.supportLevel, state.hintsVisible));
@@ -49,10 +50,15 @@ export function renderExercise(state) {
 /** Re-renders only after a submit (disable input, reveal After bead, show feedback). */
 export function renderAfterSubmit(state) {
   set('exercise-container', exercisePanelHTML(state));
-  set('grid-container',     numberGridHTML(state.currentExercise, state.supportLevel));
+  set('grid-container',     vizHTML(state.currentExercise, state.supportLevel, state.lastAttempt, state.vizMode));
   set('soroban-container',  sorobanStateHTML(state.currentExercise, state.lastAttempt, state.supportLevel, state.focusedCol));
   renderFeedback(state);
   set('provisional-container', provisionalNoticeHTML(state.selectedSkillId, state.progress));
+}
+
+/** Targeted re-render of just the visualization panel (when viz tab changes). */
+export function renderViz(state) {
+  set('grid-container', vizHTML(state.currentExercise, state.supportLevel, state.lastAttempt, state.vizMode));
 }
 
 /** Targeted re-render of just the soroban column focus indicator. */

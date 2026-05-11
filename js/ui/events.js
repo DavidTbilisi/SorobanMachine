@@ -14,6 +14,9 @@ export function bindEvents(handlers, getState) {
 
     const node = e.target.closest('.skill-node');
     if (node?.dataset.skillId) handlers.onSkillChange(node.dataset.skillId);
+
+    const vizTab = e.target.closest('.viz-tab[data-viz]');
+    if (vizTab?.dataset.viz) handlers.onVizChange(vizTab.dataset.viz);
   });
 
   document.addEventListener('change', e => {

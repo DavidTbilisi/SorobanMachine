@@ -10,7 +10,7 @@ import { applyMultiColumnOperation } from './engine/multicolumn.js';
 import {
   renderApp, renderAfterSubmit, renderExercise,
   renderDashboard, renderAttemptLog, renderSequencePanel, renderFocusedCol,
-  renderSkillTree,
+  renderSkillTree, renderViz,
 } from './ui/render.js';
 import { bindEvents } from './ui/events.js';
 
@@ -21,6 +21,7 @@ state.inputMode     ??= 'command';
 state.inputSequence ??= [];
 state.hintsVisible  ??= true;
 state.focusedCol    ??= 0;
+state.vizMode       ??= 'grid';
 
 state.progress = migrateLockedToLearning(state.progress);
 state.progress = applyRustyDecay(state.progress);
@@ -208,6 +209,12 @@ function onColRight() {
   }
 }
 
+function onVizChange(mode) {
+  state.vizMode = mode;
+  saveAppState(state);
+  renderViz(state);
+}
+
 // ── Boot ──────────────────────────────────────────────────────────────────────
 
 bindEvents(
@@ -215,7 +222,7 @@ bindEvents(
     onSubmit, onNext, onReset, onSkillChange, onSupportChange,
     onModeChange, onModeToggle, onToggleHints,
     onAddToken, onUndo, onClearSequence, onAddCommandInput,
-    onColLeft, onColRight,
+    onColLeft, onColRight, onVizChange,
   },
   () => state,
 );

@@ -288,14 +288,256 @@ export function sorobanStateHTML(exercise, lastAttempt, supportLevel, focusedCol
   </div>`;
 }
 
-// ── 10×10 number grid (operand visualization) ────────────────────────────────
+// ── Visualization panel (tab switcher + 6 renderers) ─────────────────────────
 
-/**
- * 10×10 dot grid showing the two operands of the current exercise:
- * A (startValue) in gold from row 0; B (amount) in purple starting on the
- * first row not occupied by A. Hidden for mental skills, support level 3,
- * and chain exercises (still_hands).
- */
+const VIZ_MODES = [
+  { id: 'grid',       label: 'Grid' },
+  { id: 'numberline', label: 'Line' },
+  { id: 'base10',     label: 'Base 10' },
+  { id: 'tokens',     label: 'Tokens' },
+  { id: 'barmodel',   label: 'Bars' },
+  { id: 'fingers',    label: 'Fingers' },
+];
+
+export function vizHTML(exercise, supportLevel, lastAttempt, vizMode = 'grid') {
+  if (!exercise || supportLevel === 3 || isMentalOnlySkill(exercise.skillId)) return '';
+  if (exercise.ops) return '';
+  const { startValue, amount, direction } = exercise;
+  if (typeof startValue !== 'number' || typeof amount !== 'number') return '';
+
+  const tabs = VIZ_MODES.map(m =>
+    `<button class="viz-tab${vizMode === m.id ? ' active' : ''}" data-viz="${m.id}">${m.label}</button>`
+  ).join('');
+
+  let inner;
+  if      (vizMode === 'numberline') inner = renderNumberLine(startValue, amount, direction, lastAttempt);
+  else if (vizMode === 'base10')     inner = renderBase10(startValue, amount, direction, lastAttempt);
+  else if (vizMode === 'tokens')     inner = renderTokens(startValue, amount, direction, lastAttempt);
+  else if (vizMode === 'barmodel')   inner = renderBarModel(startValue, amount, direction, lastAttempt);
+  else if (vizMode === 'fingers')    inner = renderFingers(startValue, amount, direction, lastAttempt);
+  else                               inner = renderGrid(startValue, amount, direction);
+
+  return `<div class="viz-panel">
+    <div class="viz-tabs">${tabs}</div>
+    <div class="viz-content">${inner}</div>
+  </div>`;
+}
+
+function renderGrid(startValue, amount, direction) {
+  const CELL = 14, GAP = 2, COLS = 10, ROWS = 10, PAD = 2;
+  const W = COLS * (CELL + GAP) - GAP + PAD * 2;
+  const H = ROWS * (CELL + GAP) - GAP + PAD * 2;
+  const aCount = Math.max(0, Math.min(100, startValue));
+  const bStart = aCount;
+  const bCount = Math.max(0, Math.min(amount, 100 - bStart));
+  const cells = [];
+  for (let i = 0; i < COLS * ROWS; i++) {
+    const r = Math.floor(i / COLS), c = i % COLS;
+    const cx = c * (CELL + GAP) + CELL / 2 + PAD;
+    const cy = r * (CELL + GAP) + CELL / 2 + PAD;
+    const radius = CELL / 2 - 2;
+    const fill   = i < aCount ? '#d8a0a0' : (i >= bStart && i < bStart + bCount ? '#a0c898' : 'none');
+    const stroke = i < aCount ? '#8a5050' : (i >= bStart && i < bStart + bCount ? '#507850' : '#d4d0c8');
+    cells.push(`<circle cx="${cx}" cy="${cy}" r="${radius}" fill="${fill}" stroke="${stroke}" stroke-width="1.5"/>`);
+  }
+  const divX = 5 * (CELL + GAP) - GAP / 2 + PAD;
+  cells.push(`<line x1="${divX}" y1="${PAD}" x2="${divX}" y2="${H - PAD}" stroke="#718096" stroke-width="1.5"/>`);
+  const sign = direction === 'add' ? '+' : '−';
+  return `<div class="number-grid">
+    <div class="grid-label">${startValue} ${sign} ${amount}</div>
+    <svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">${cells.join('')}</svg>
+    <div class="grid-legend">
+      <span class="grid-key"><span class="grid-dot grid-dot-a"></span> A = ${startValue}</span>
+      <span class="grid-key"><span class="grid-dot grid-dot-b"></span> B = ${amount}</span>
+    </div>
+  </div>`;
+}
+
+function renderNumberLine(startValue, amount, direction, lastAttempt) {
+  const result = direction === 'add' ? startValue + amount : startValue - amount;
+  const answered = !!lastAttempt;
+  const lo = Math.max(0, Math.min(startValue, result) - 1);
+  const hi = Math.max(startValue, result) + 2;
+  const range = Math.max(hi - lo, 8);
+  const W = 270, H = 72, LP = 22, RP = 14, BY = 48;
+  const chartW = W - LP - RP;
+  const toX = v => LP + (v - lo) / range * chartW;
+  const aX = toX(startValue), rX = toX(result);
+  const arcH = Math.max(16, Math.abs(rX - aX) * 0.5);
+  const sign = direction === 'add' ? '+' : '−';
+  const ticks = [];
+  for (let v = lo; v <= lo + range; v++) {
+    const x = toX(v).toFixed(1);
+    const big = v % 5 === 0;
+    ticks.push(`<line x1="${x}" y1="${BY}" x2="${x}" y2="${BY + (big ? 9 : 4)}" stroke="#b8b4aa" stroke-width="${big ? 1.5 : 0.8}"/>`);
+    if (big) ticks.push(`<text x="${x}" y="${BY + 20}" text-anchor="middle" font-size="9" fill="#78746e">${v}</text>`);
+  }
+  return `<div class="viz-numline">
+    <div class="grid-label">${startValue} ${sign} ${amount}</div>
+    <svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">
+      <defs>
+        <marker id="nlarrow" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto">
+          <polygon points="0,0 7,3.5 0,7" fill="#a0c898"/>
+        </marker>
+      </defs>
+      <line x1="${LP}" y1="${BY}" x2="${W - RP}" y2="${BY}" stroke="#b8b4aa" stroke-width="1.5"/>
+      ${ticks.join('')}
+      ${answered ? `<path d="M${aX.toFixed(1)} ${BY - 5} Q${((aX + rX) / 2).toFixed(1)} ${(BY - arcH - 5).toFixed(1)} ${rX.toFixed(1)} ${BY - 5}" fill="none" stroke="#a0c898" stroke-width="2" marker-end="url(#nlarrow)"/>` : ''}
+      <circle cx="${aX.toFixed(1)}" cy="${BY}" r="6.5" fill="#d8a0a0" stroke="#8a5050" stroke-width="1.5"/>
+      <text x="${aX.toFixed(1)}" y="${BY - 11}" text-anchor="middle" font-size="10" font-weight="700" fill="#8a5050">${startValue}</text>
+      ${answered ? `<circle cx="${rX.toFixed(1)}" cy="${BY}" r="6.5" fill="#a0c898" stroke="#507850" stroke-width="1.5"/>
+        <text x="${rX.toFixed(1)}" y="${BY - 11}" text-anchor="middle" font-size="10" font-weight="700" fill="#507850">${result}</text>` : ''}
+    </svg>
+  </div>`;
+}
+
+function renderBase10(startValue, amount, direction, lastAttempt) {
+  const answered = !!lastAttempt;
+  const result = direction === 'add' ? startValue + amount : startValue - amount;
+  const sign = direction === 'add' ? '+' : '−';
+  function blocksSVG(value, fill, stroke) {
+    const abs = Math.abs(value);
+    const tens = Math.floor(abs / 10), units = abs % 10;
+    const U = 12, G = 2, COLS = 5;
+    const rodW = 10 * (U + G) - G;
+    const shapes = [];
+    let y = 2;
+    for (let t = 0; t < tens; t++) {
+      shapes.push(`<rect x="2" y="${y}" width="${rodW}" height="${U}" rx="3" fill="${fill}" stroke="${stroke}" stroke-width="1" opacity="0.9"/>`);
+      for (let d = 1; d < 10; d++) shapes.push(`<line x1="${2 + d * (U + G) - 1}" y1="${y}" x2="${2 + d * (U + G) - 1}" y2="${y + U}" stroke="${stroke}" stroke-width="0.5" opacity="0.4"/>`);
+      y += U + G + 2;
+    }
+    for (let u = 0; u < units; u++) {
+      shapes.push(`<rect x="${2 + (u % COLS) * (U + G)}" y="${y + Math.floor(u / COLS) * (U + G)}" width="${U}" height="${U}" rx="2" fill="${fill}" stroke="${stroke}" stroke-width="1" opacity="0.9"/>`);
+    }
+    const unitRows = Math.ceil(units / COLS);
+    const svgH = Math.max(y + (units > 0 ? unitRows * (U + G) + 2 : 2), 18);
+    const svgW = Math.max(rodW, COLS * (U + G)) + 4;
+    return `<svg width="${svgW}" height="${svgH}" viewBox="0 0 ${svgW} ${svgH}" style="overflow:visible">${shapes.join('')}</svg>`;
+  }
+  const rFill = result >= 0 ? '#b8d4e8' : '#f0c8c8';
+  const rStroke = result >= 0 ? '#406880' : '#8a5050';
+  return `<div class="viz-base10">
+    <div class="grid-label">${startValue} ${sign} ${amount}</div>
+    <div class="b10-row">
+      <div class="b10-group">${blocksSVG(startValue, '#f0c8c8', '#8a5050')}<div class="b10-label b10-label-a">A = ${startValue}</div></div>
+      <div class="b10-op">${sign}</div>
+      <div class="b10-group">${blocksSVG(amount, '#c8e4c0', '#507850')}<div class="b10-label b10-label-b">B = ${amount}</div></div>
+      ${answered ? `<div class="b10-op">=</div><div class="b10-group">${blocksSVG(result, rFill, rStroke)}<div class="b10-label">${result}</div></div>` : ''}
+    </div>
+  </div>`;
+}
+
+function renderTokens(startValue, amount, direction, lastAttempt) {
+  const answered = !!lastAttempt;
+  const result = direction === 'add' ? startValue + amount : startValue - amount;
+  const sign = direction === 'add' ? '+' : '−';
+  function coinsSVG(count, fill, stroke) {
+    const n = Math.max(0, Math.min(count, 30));
+    const R = 8, G = 3, COLS = 5, cellW = R * 2 + G;
+    const cols = Math.min(n || 1, COLS);
+    const rows = Math.max(Math.ceil(n / COLS), 1);
+    const svgW = cols * cellW + 2, svgH = rows * cellW + 2;
+    const shapes = [];
+    for (let i = 0; i < n; i++) {
+      const cx = (i % COLS) * cellW + R + 1, cy = Math.floor(i / COLS) * cellW + R + 1;
+      shapes.push(`<circle cx="${cx}" cy="${cy}" r="${R}" fill="${fill}" stroke="${stroke}" stroke-width="1.5"/>`);
+      shapes.push(`<ellipse cx="${cx - R * 0.25}" cy="${cy - R * 0.3}" rx="${(R * 0.35).toFixed(1)}" ry="${(R * 0.22).toFixed(1)}" fill="rgba(255,255,255,0.45)"/>`);
+    }
+    if (n === 0) shapes.push(`<text x="4" y="14" font-size="11" fill="#b8b4aa">0</text>`);
+    return `<svg width="${svgW}" height="${svgH}" viewBox="0 0 ${svgW} ${svgH}">${shapes.join('')}</svg>`;
+  }
+  const rFill = result >= 0 ? '#b8d4e8' : '#f0c8c8';
+  const rStroke = result >= 0 ? '#406880' : '#8a5050';
+  return `<div class="viz-tokens">
+    <div class="grid-label">${startValue} ${sign} ${amount}</div>
+    <div class="b10-row">
+      <div class="b10-group">${coinsSVG(startValue, '#f0c8c8', '#8a5050')}<div class="b10-label b10-label-a">A = ${startValue}</div></div>
+      <div class="b10-op">${sign}</div>
+      <div class="b10-group">${coinsSVG(amount, '#c8e4c0', '#507850')}<div class="b10-label b10-label-b">B = ${amount}</div></div>
+      ${answered ? `<div class="b10-op">=</div><div class="b10-group">${coinsSVG(Math.abs(result), rFill, rStroke)}<div class="b10-label">${result}</div></div>` : ''}
+    </div>
+  </div>`;
+}
+
+function renderBarModel(startValue, amount, direction, lastAttempt) {
+  const answered = !!lastAttempt;
+  const result = direction === 'add' ? startValue + amount : startValue - amount;
+  const sign = direction === 'add' ? '+' : '−';
+  const maxVal = Math.max(startValue, amount, Math.abs(result), 1);
+  const W = 240, BH = 26, GAP = 8, LP = 28;
+  const chartW = W - LP - 8;
+  const toW = v => Math.max(4, v / maxVal * chartW);
+  const aW = toW(startValue), bW = toW(amount), rW = toW(Math.abs(result));
+  const rows = answered ? 3 : 2;
+  const svgH = 4 + rows * (BH + GAP);
+  const rFill = result >= 0 ? '#b8d4e8' : '#f0c8c8';
+  const rStroke = result >= 0 ? '#406880' : '#8a5050';
+  return `<div class="viz-barmodel">
+    <div class="grid-label">${startValue} ${sign} ${amount}</div>
+    <svg width="${W}" height="${svgH}" viewBox="0 0 ${W} ${svgH}">
+      <text x="${LP - 4}" y="${BH / 2 + 8}" text-anchor="end" font-size="10" font-weight="700" fill="#8a5050">A</text>
+      <rect x="${LP}" y="4" width="${aW}" height="${BH}" rx="4" fill="#f0c8c8" stroke="#8a5050" stroke-width="1.5"/>
+      <text x="${LP + aW / 2}" y="${4 + BH / 2 + 4}" text-anchor="middle" font-size="11" font-weight="700" fill="#8a5050">${startValue}</text>
+      <text x="${LP - 4}" y="${4 + BH + GAP + BH / 2 + 4}" text-anchor="end" font-size="10" font-weight="700" fill="#507850">B</text>
+      <rect x="${LP}" y="${4 + BH + GAP}" width="${bW}" height="${BH}" rx="4" fill="#c8e4c0" stroke="#507850" stroke-width="1.5"/>
+      <text x="${LP + bW / 2}" y="${4 + BH + GAP + BH / 2 + 4}" text-anchor="middle" font-size="11" font-weight="700" fill="#507850">${amount}</text>
+      ${answered ? `<text x="${LP - 4}" y="${4 + (BH + GAP) * 2 + BH / 2 + 4}" text-anchor="end" font-size="10" font-weight="700" fill="${rStroke}">=</text>
+        <rect x="${LP}" y="${4 + (BH + GAP) * 2}" width="${rW}" height="${BH}" rx="4" fill="${rFill}" stroke="${rStroke}" stroke-width="1.5"/>
+        <text x="${LP + rW / 2}" y="${4 + (BH + GAP) * 2 + BH / 2 + 4}" text-anchor="middle" font-size="11" font-weight="700" fill="${rStroke}">${result}</text>` : ''}
+    </svg>
+  </div>`;
+}
+
+function renderFingers(startValue, amount, direction, lastAttempt) {
+  const sign = direction === 'add' ? '+' : '−';
+  if (startValue > 10 || amount > 10) {
+    return `<div class="viz-fingers viz-msg"><div class="grid-label">${startValue} ${sign} ${amount}</div><p>Finger view supports 0–10 only</p></div>`;
+  }
+  const FW = 9, FH = 28, FG = 3, PALM_H = 14;
+  const HAND_W = 5 * FW + 4 * FG;
+  const SVG_W = HAND_W * 2 + 20, SVG_H = FH + PALM_H + 12;
+  function fingerRect(x, y, raised, fill, stroke) {
+    return raised
+      ? `<rect x="${x}" y="${y}" width="${FW}" height="${FH}" rx="${FW / 2}" fill="${fill}" stroke="${stroke}" stroke-width="1"/>`
+      : `<rect x="${x}" y="${y + FH - 8}" width="${FW}" height="8" rx="${FW / 2}" fill="${fill}" stroke="${stroke}" stroke-width="1" opacity="0.45"/>`;
+  }
+  const leftA  = Math.min(startValue, 5);
+  const rightA = Math.max(0, startValue - 5);
+  const rightB = Math.min(amount, 5 - rightA);
+  const shapes = [];
+  // Left hand
+  shapes.push(`<rect x="0" y="${FH + 2}" width="${HAND_W}" height="${PALM_H}" rx="4" fill="#f0c8c8" stroke="#8a5050" stroke-width="1"/>`);
+  shapes.push(`<text x="${HAND_W / 2}" y="${SVG_H - 1}" text-anchor="middle" font-size="8" fill="#8a5050">A</text>`);
+  for (let i = 0; i < 5; i++) {
+    const raised = i < leftA;
+    shapes.push(fingerRect(i * (FW + FG), 2, raised, raised ? '#f0c8c8' : '#f0ebe0', raised ? '#8a5050' : '#c8c4bc'));
+  }
+  // Right hand
+  const rx = HAND_W + 20;
+  const rPalmFill = rightA > 0 ? '#f0c8c8' : '#c8e4c0';
+  const rPalmStroke = rightA > 0 ? '#8a5050' : '#507850';
+  shapes.push(`<rect x="${rx}" y="${FH + 2}" width="${HAND_W}" height="${PALM_H}" rx="4" fill="${rPalmFill}" stroke="${rPalmStroke}" stroke-width="1"/>`);
+  shapes.push(`<text x="${rx + HAND_W / 2}" y="${SVG_H - 1}" text-anchor="middle" font-size="8" fill="${rPalmStroke}">B</text>`);
+  for (let i = 0; i < 5; i++) {
+    let fill, stroke, raised;
+    if (i < rightA)            { raised = true;  fill = '#f0c8c8'; stroke = '#8a5050'; }
+    else if (i < rightA + rightB) { raised = true;  fill = '#c8e4c0'; stroke = '#507850'; }
+    else                        { raised = false; fill = '#f0ebe0'; stroke = '#c8c4bc'; }
+    shapes.push(fingerRect(rx + i * (FW + FG), 2, raised, fill, stroke));
+  }
+  return `<div class="viz-fingers">
+    <div class="grid-label">${startValue} ${sign} ${amount}</div>
+    <svg width="${SVG_W}" height="${SVG_H}" viewBox="0 0 ${SVG_W} ${SVG_H}">${shapes.join('')}</svg>
+    <div class="grid-legend">
+      <span class="grid-key"><span class="grid-dot grid-dot-a"></span> A = ${startValue}</span>
+      <span class="grid-key"><span class="grid-dot grid-dot-b"></span> B = ${amount}</span>
+    </div>
+  </div>`;
+}
+
+// ── 10×10 number grid (operand visualization) — legacy export ─────────────────
+
 export function numberGridHTML(exercise, supportLevel) {
   if (!exercise || supportLevel === 3 || isMentalOnlySkill(exercise.skillId)) return '';
   if (exercise.ops) return '';
