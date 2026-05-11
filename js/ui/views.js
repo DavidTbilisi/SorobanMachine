@@ -111,48 +111,53 @@ function sorobanSVG(value) {
   for (let j = (4 - lower) - 1; j >= 0; j--)
     beads.push({ cy: bottomBase - j * beadGap, active: false });
 
-  const bead = (cy, active) => {
-    const fill   = active ? 'url(#sg-active)'   : 'url(#sg-inactive)';
-    const stroke = active ? '#1e3a8a' : '#93c5fd';
-    const glow   = active ? `<ellipse cx="${cx - rx*0.28}" cy="${cy - ry*0.32}" rx="${rx*0.28}" ry="${ry*0.22}" fill="rgba(255,255,255,0.45)"/>` : '';
+  const bead = (cy, active, isUpper = false) => {
+    const fill   = active ? (isUpper ? 'url(#sg-upper)' : 'url(#sg-lower)') : 'url(#sg-inactive)';
+    const stroke = active ? (isUpper ? '#78350f' : '#7f1d1d') : '#c4a882';
+    const glow   = active ? `<ellipse cx="${cx - rx*0.28}" cy="${cy - ry*0.32}" rx="${rx*0.28}" ry="${ry*0.22}" fill="rgba(255,255,255,0.52)"/>` : '';
     return `<ellipse cx="${cx}" cy="${cy}" rx="${rx}" ry="${ry}" fill="${fill}" stroke="${stroke}" stroke-width="0.8" filter="url(#sg-drop)"/>
     ${glow}`;
   };
 
   return `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" class="soroban-svg">
     <defs>
-      <radialGradient id="sg-active" cx="35%" cy="28%" r="68%" gradientUnits="objectBoundingBox">
-        <stop offset="0%"   stop-color="#93c5fd"/>
-        <stop offset="42%"  stop-color="#2563eb"/>
-        <stop offset="100%" stop-color="#1e3a8a"/>
+      <radialGradient id="sg-upper" cx="35%" cy="28%" r="68%" gradientUnits="objectBoundingBox">
+        <stop offset="0%"   stop-color="#fde68a"/>
+        <stop offset="42%"  stop-color="#d97706"/>
+        <stop offset="100%" stop-color="#78350f"/>
+      </radialGradient>
+      <radialGradient id="sg-lower" cx="35%" cy="28%" r="68%" gradientUnits="objectBoundingBox">
+        <stop offset="0%"   stop-color="#fca5a5"/>
+        <stop offset="40%"  stop-color="#dc2626"/>
+        <stop offset="100%" stop-color="#7f1d1d"/>
       </radialGradient>
       <radialGradient id="sg-inactive" cx="35%" cy="28%" r="68%" gradientUnits="objectBoundingBox">
-        <stop offset="0%"   stop-color="#ffffff"/>
-        <stop offset="45%"  stop-color="#bfdbfe"/>
-        <stop offset="100%" stop-color="#7fb3e8"/>
+        <stop offset="0%"   stop-color="#fef9f0"/>
+        <stop offset="50%"  stop-color="#e8d5bc"/>
+        <stop offset="100%" stop-color="#c4a882"/>
       </radialGradient>
       <linearGradient id="sg-rod" x1="${cx-2}" y1="0" x2="${cx+2}" y2="0" gradientUnits="userSpaceOnUse">
-        <stop offset="0%"   stop-color="#94a3b8"/>
-        <stop offset="38%"  stop-color="#e8edf5"/>
-        <stop offset="100%" stop-color="#64748b"/>
+        <stop offset="0%"   stop-color="#3d1f0a"/>
+        <stop offset="40%"  stop-color="#7a4a28"/>
+        <stop offset="100%" stop-color="#3d1f0a"/>
       </linearGradient>
       <linearGradient id="sg-beam" x1="0" y1="${beamY-5}" x2="0" y2="${beamY+5}" gradientUnits="userSpaceOnUse">
-        <stop offset="0%"   stop-color="#fde68a"/>
-        <stop offset="45%"  stop-color="#d97706"/>
-        <stop offset="100%" stop-color="#92400e"/>
+        <stop offset="0%"   stop-color="#c8793e"/>
+        <stop offset="40%"  stop-color="#8b4513"/>
+        <stop offset="100%" stop-color="#4a1f06"/>
       </linearGradient>
       <filter id="sg-drop" x="-25%" y="-25%" width="150%" height="150%">
-        <feDropShadow dx="0" dy="1.5" stdDeviation="1.2" flood-color="rgba(0,0,0,0.28)"/>
+        <feDropShadow dx="0" dy="1.5" stdDeviation="1.2" flood-color="rgba(0,0,0,0.30)"/>
       </filter>
       <filter id="sg-beam-shadow" x="-5%" y="-30%" width="110%" height="160%">
-        <feDropShadow dx="0" dy="1" stdDeviation="1" flood-color="rgba(0,0,0,0.2)"/>
+        <feDropShadow dx="0" dy="1" stdDeviation="1" flood-color="rgba(0,0,0,0.22)"/>
       </filter>
     </defs>
     <rect x="${cx-2}" y="4" width="4" height="${H-12}" fill="url(#sg-rod)" rx="2"/>
     <rect x="4" y="${beamY-5}" width="${W-8}" height="10" fill="url(#sg-beam)" rx="3.5" filter="url(#sg-beam-shadow)"/>
-    ${bead(upperCY, upper === 1)}
-    ${beads.map(b => bead(b.cy, b.active)).join('\n    ')}
-    <text x="${cx}" y="${H-1}" text-anchor="middle" font-size="11" fill="#64748b" font-family="monospace" font-weight="600">${value}</text>
+    ${bead(upperCY, upper === 1, true)}
+    ${beads.map(b => bead(b.cy, b.active, false)).join('\n    ')}
+    <text x="${cx}" y="${H-1}" text-anchor="middle" font-size="11" fill="#6b5344" font-family="monospace" font-weight="700">${value}</text>
   </svg>`;
 }
 
@@ -250,9 +255,9 @@ export function numberGridHTML(exercise, supportLevel) {
   const W = COLS * (CELL + GAP) - GAP + PAD * 2;
   const H = ROWS * (CELL + GAP) - GAP + PAD * 2;
 
-  const A_FILL = '#ecc94b', A_STROKE = '#b7791f';
-  const B_FILL = '#9f7aea', B_STROKE = '#553c9a';
-  const EMPTY_STROKE = '#cbd5e0';
+  const A_FILL = '#d97706', A_STROKE = '#78350f';
+  const B_FILL = '#dc2626', B_STROKE = '#7f1d1d';
+  const EMPTY_STROKE = '#ddd0ba';
 
   const aCount = Math.max(0, Math.min(100, startValue));
   const bStart = aCount;
@@ -489,10 +494,10 @@ export function skillTreeHTML(progress, selectedSkillId) {
 
   const STYLE = {
     locked:      { fill: '#f3f4f6', stroke: '#d1d5db', text: '#9ca3af', weight: '400' },
-    learning:    { fill: '#eff6ff', stroke: '#93c5fd', text: '#1d4ed8', weight: '500' },
-    provisional: { fill: '#f5f3ff', stroke: '#a78bfa', text: '#6d28d9', weight: '500' },
-    mastered:    { fill: '#f0fdf4', stroke: '#4ade80', text: '#15803d', weight: '600' },
-    rusty:       { fill: '#fffbeb', stroke: '#fbbf24', text: '#b45309', weight: '500' },
+    learning:    { fill: '#dbeafe', stroke: '#3b82f6', text: '#1e40af', weight: '700' },
+    provisional: { fill: '#ede9fe', stroke: '#8b5cf6', text: '#5b21b6', weight: '700' },
+    mastered:    { fill: '#dcfce7', stroke: '#16a34a', text: '#14532d', weight: '700' },
+    rusty:       { fill: '#fef9c3', stroke: '#d97706', text: '#78350f', weight: '700' },
   };
 
   const ICON = { locked: '', learning: '', provisional: '◑ ', mastered: '✓ ', rusty: '⚠ ' };
@@ -516,13 +521,13 @@ export function skillTreeHTML(progress, selectedSkillId) {
 
     return `<g class="skill-node" data-skill-id="${skill.id}" style="cursor:pointer">
       <rect x="${x - NODE_W / 2}" y="${y - NODE_H / 2}" width="${NODE_W}" height="${NODE_H}" rx="${RX}"
-        fill="${st.fill}"
-        stroke="${isSelected ? '#4f46e5' : st.stroke}"
+        fill="${isSelected ? '#fff2f0' : st.fill}"
+        stroke="${isSelected ? '#c9230f' : st.stroke}"
         stroke-width="${isSelected ? 2.5 : 1.5}"/>
       <text x="${x}" y="${y}" text-anchor="middle" dominant-baseline="middle"
-        font-size="12" font-family="system-ui,-apple-system,sans-serif"
-        fill="${isSelected ? '#4f46e5' : st.text}"
-        font-weight="${isSelected ? '700' : st.weight}">
+        font-size="12" font-family="'Baloo 2',system-ui,sans-serif"
+        fill="${isSelected ? '#c9230f' : st.text}"
+        font-weight="${isSelected ? '800' : st.weight}">
         ${ICON[status]}${label}
       </text>
     </g>`;
