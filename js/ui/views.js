@@ -1,4 +1,4 @@
-import { STATUS, SUPPORT_LABELS, LICENSE } from '../config.js';
+import { STATUS, SUPPORT_LABELS, LICENSE, LATENCY_PAUSE_CAP_MS } from '../config.js';
 import { getAllSkills, getRecommendationHint } from '../trainer/skills.js';
 import { getMasteryBlockers } from '../trainer/gates.js';
 import { isMentalOnlySkill } from '../trainer/exercises.js';
@@ -90,12 +90,16 @@ export function exercisePanelHTML(state) {
          <input type="text" id="answer-input" placeholder="+5  or  +5, −2"
            ${answered ? 'disabled' : ''} autofocus>`;
 
-  return `<div>
+  // data-ex resets the pause-indicator animation between exercises.
+  return `<div data-ex="${ex.id}">
     <p class="exercise-meta">
       <strong>${selectedSkillId}</strong> · ${SUPPORT_LABELS[supportLevel]} · <em>${inputMode} mode</em>
     </p>
     <p class="prompt">${ex.prompt}</p>
     ${inputSection}
+    ${answered ? '' : `<div class="pause-indicator" style="animation-delay:${LATENCY_PAUSE_CAP_MS}ms" aria-live="polite" role="status">
+      <span class="pause-icon">⏸</span><span class="pause-text">Timer paused — your stats are safe</span>
+    </div>`}
     <div class="btn-row">
       <button id="btn-submit"${answered ? ' disabled' : ''}>Submit [Enter]</button>
       <button id="btn-next">Next [Space]</button>

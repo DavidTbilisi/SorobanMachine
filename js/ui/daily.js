@@ -78,15 +78,25 @@ function playingHTML(daily) {
   const p = daily.problems[daily.idx];
   const total = daily.problems.length;
   const pct = Math.round(100 * daily.idx / total);
-  return `<div class="dc-screen dc-stage">
+  // Per-question key forces the animation to restart between problems.
+  return `<div class="dc-screen dc-stage" data-q="${daily.idx}">
     <div class="dc-progress-bar"><div class="dc-progress-fill" style="width:${pct}%"></div></div>
     <div class="dc-progress-label">${daily.idx + 1} / ${total}</div>
     <p class="dc-prompt">${p.prompt}</p>
     <input type="text" inputmode="numeric" id="dc-answer" class="dc-answer" autocomplete="off" autofocus>
+    ${pauseIndicatorHTML()}
     <div class="dc-btn-row">
       <button id="dc-submit" class="dc-btn dc-btn-primary">Submit [Enter]</button>
       <button id="dc-back"   class="dc-btn dc-btn-ghost">Abandon</button>
     </div>
+  </div>`;
+}
+
+function pauseIndicatorHTML() {
+  return `<div class="pause-indicator" style="animation-delay:${LATENCY_PAUSE_CAP_MS}ms"
+              aria-live="polite" role="status">
+    <span class="pause-icon">⏸</span>
+    <span class="pause-text">Timer paused — your stats are safe</span>
   </div>`;
 }
 

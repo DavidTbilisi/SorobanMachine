@@ -1456,6 +1456,41 @@ details > div { padding: 10px 12px; }
   }
 }
 
+/* ── Pause indicator (idle-protection badge) ──────────────────────────────── */
+
+.pause-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+  padding: 5px 12px;
+  border-radius: var(--radius-pill);
+  background: var(--sand-light);
+  border: 1.5px solid var(--sand);
+  color: var(--sand-dark);
+  font-family: 'Outfit', sans-serif;
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  opacity: 0;
+  transform: translateY(2px);
+  pointer-events: none;
+  /* animation-delay is set inline (= LATENCY_PAUSE_CAP_MS), so this stays
+     in sync if the cap ever changes. fill-mode forwards keeps it visible. */
+  animation: pause-fade-in 0.35s linear forwards;
+}
+
+@keyframes pause-fade-in {
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.pause-icon { font-size: 13px; line-height: 1; }
+.pause-text { line-height: 1.1; }
+
+@media (prefers-reduced-motion: reduce) {
+  .pause-indicator { animation-duration: 0.01s; transform: none; }
+}
+
 /* ── Dashboard sparklines ─────────────────────────────────────────────────── */
 
 .trend-col { min-width: 130px; }
