@@ -257,8 +257,10 @@ export function computeStreak(results, today) {
 // ── Run-recording helpers (called by ui controller) ─────────────────────────
 
 export function finalizeRun(daily) {
-  const correct  = daily.perAnswer.filter(a => a.correct).length;
-  const totalMs  = (Date.now() - (daily.runStartedAt ?? Date.now())) | 0;
+  const correct = daily.perAnswer.filter(a => a.correct).length;
+  // Total = sum of per-problem (already-capped) latencies, NOT wall-clock.
+  // This way pauses BETWEEN problems also don't inflate the recap.
+  const totalMs = daily.perAnswer.reduce((sum, a) => sum + (a.latencyMs || 0), 0);
   return {
     date:        daily.date,
     total:       daily.problems.length,

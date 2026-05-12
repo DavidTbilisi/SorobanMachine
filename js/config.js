@@ -72,3 +72,10 @@ export const PROVISIONAL_HOLD_MS = 24 * 60 * 60 * 1000;
 
 /** ms without practice before a mastered skill becomes rusty (14 days) */
 export const RUSTY_THRESHOLD_MS = 14 * 24 * 60 * 60 * 1000;
+
+/**
+ * Max measured latency per attempt / per daily problem. If the user pauses
+ * longer than this, the timer stops counting — protects stats from
+ * walked-away-from-the-screen situations.
+ */
+export const LATENCY_PAUSE_CAP_MS = 30 * 1000;

@@ -266,6 +266,25 @@ test('numberGrid: B starts on the row after A finishes', () => {
   assertEq(countMatches(html2, /fill="#a0c898"/g), 5);
 });
 
+// ── Latency cap (idle protection) ────────────────────────────────────────────
+
+test('calculateLatency caps at 30s for long pauses', () => {
+  const now = Date.now();
+  // 2 minutes pause — should be capped.
+  assertEq(scMod.calculateLatency(now - 120_000, now), 30_000, 'expected 30s cap');
+  // Below cap — passes through.
+  assertEq(scMod.calculateLatency(now - 1500, now), 1500);
+  // Negative / weird → 0
+  assertEq(scMod.calculateLatency(now + 1000, now), 0);
+});
+
+test('evaluateAnswerNumeric records capped latency on a long pause', () => {
+  const ex = exMod.generateExercise(cfg.SKILL_IDS.GHOST_MODE);
+  const startedAt = Date.now() - 5 * 60 * 1000;  // 5 min ago
+  const att = scMod.evaluateAnswerNumeric(String(ex.expectedResult), ex, 3, startedAt);
+  assertEq(att.latencyMs, cfg.LATENCY_PAUSE_CAP_MS);
+});
+
 // ── Run ──────────────────────────────────────────────────────────────────────
 
 let passed = 0, failed = 0;

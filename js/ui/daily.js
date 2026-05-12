@@ -8,6 +8,7 @@ import {
   computeStreak,
   finalizeRun,
 } from '../trainer/daily.js';
+import { LATENCY_PAUSE_CAP_MS } from '../config.js';
 
 export { createInitialDailyState, serializableDailyState };
 
@@ -157,7 +158,9 @@ export function submitDailyAnswer(state, rawInput, onChange) {
   if (d.phase !== 'playing') return;
   const problem = d.problems[d.idx];
   const evalRes = evaluateDailyAnswer(rawInput, problem.expectedResult);
-  const latencyMs = Date.now() - (d.questionStartedAt ?? Date.now());
+  const raw = Date.now() - (d.questionStartedAt ?? Date.now());
+  // Cap idle gaps — if the user walked away, the clock stops at 30s.
+  const latencyMs = Math.min(Math.max(0, raw), LATENCY_PAUSE_CAP_MS);
 
   d.perAnswer = [...d.perAnswer, {
     correct: evalRes.correct, parsed: evalRes.parsed, expected: evalRes.expected, latencyMs,

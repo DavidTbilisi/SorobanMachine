@@ -1,4 +1,4 @@
-import { SUPPORT_DEPENDENCY } from '../config.js';
+import { SUPPORT_DEPENDENCY, LATENCY_PAUSE_CAP_MS } from '../config.js';
 import { sequencesEqual, sequenceToLabels } from '../keyboard/shortcuts.js';
 
 function makeId() {
@@ -10,9 +10,15 @@ export function calculateSupportDependency(supportLevel) {
   return SUPPORT_DEPENDENCY[supportLevel] ?? 0;
 }
 
-/** @param {number} startTime @param {number} endTime @returns {number} */
+/**
+ * Wall-clock elapsed, capped at LATENCY_PAUSE_CAP_MS. The cap protects mastery
+ * stats from idle gaps (tab switched, user walked away).
+ * @param {number} startTime @param {number} endTime @returns {number}
+ */
 export function calculateLatency(startTime, endTime) {
-  return endTime - startTime;
+  const raw = endTime - startTime;
+  if (!Number.isFinite(raw) || raw < 0) return 0;
+  return Math.min(raw, LATENCY_PAUSE_CAP_MS);
 }
 
 // ── Numeric evaluation (mental-only / support-level-3 mode) ──────────────────
