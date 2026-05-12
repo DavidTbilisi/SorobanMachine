@@ -7,6 +7,19 @@ import { accuracySparklineSVG, latencySparklineSVG } from './charts.js';
 
 // ── App-mode tabs ─────────────────────────────────────────────────────────────
 
+// ── Settings widget ───────────────────────────────────────────────────────────
+
+export function settingsHTML(settings) {
+  const sound    = settings?.soundOn !== false;
+  const confetti = settings?.confettiOn !== false;
+  return `
+    <button class="settings-toggle" id="set-sound"    aria-pressed="${sound}"
+            title="Toggle sound effects">${sound    ? '🔊' : '🔇'}</button>
+    <button class="settings-toggle" id="set-confetti" aria-pressed="${confetti}"
+            title="Toggle celebration effects">${confetti ? '✨' : '⚫'}</button>
+  `;
+}
+
 export function appModeTabsHTML(appMode) {
   const tab = (mode, label, hint) =>
     `<button class="mode-tab${appMode === mode ? ' active' : ''}" data-mode="${mode}">

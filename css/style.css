@@ -59,8 +59,49 @@ h1 {
   font-size: 1.6rem;
   font-weight: 700;
   letter-spacing: 0.01em;
-  margin: 0 0 14px;
+  margin: 0;
   color: var(--text);
+}
+
+.header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+  flex-wrap: wrap;
+}
+
+.settings-row {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.settings-toggle {
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-pill);
+  width: 36px;
+  height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  cursor: pointer;
+  box-shadow: var(--shadow);
+  transition: transform 0.1s, box-shadow 0.15s, background 0.15s, opacity 0.15s;
+  padding: 0;
+  line-height: 1;
+}
+
+.settings-toggle:hover { background: var(--surface-2); transform: translateY(-1px); box-shadow: var(--shadow-md); }
+.settings-toggle:active { transform: translateY(1px); }
+
+.settings-toggle[aria-pressed="false"] {
+  opacity: 0.45;
+  background: var(--surface-2);
+  filter: grayscale(0.6);
 }
 
 hr {

@@ -3,6 +3,7 @@ import {
   generateFlashSequence, evaluateFlashAnswer, updateFlashStats,
   createInitialFlashStats,
 } from '../trainer/flashAnzan.js';
+import { playTick } from './sound.js';
 
 // ── Initial state ────────────────────────────────────────────────────────────
 
@@ -190,6 +191,7 @@ function showNext(state, onChange, firstRender) {
 
   fa.currentNumber = fa.numbers[fa.currentIndex];
   fa.flashOn = true;
+  playTick();
 
   // First render of flashing phase needs a full re-render to swap HTML.
   // Subsequent ticks mutate the number element directly to avoid flicker.

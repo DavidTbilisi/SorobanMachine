@@ -14,6 +14,7 @@ import {
   dashboardHTML,
   attemptLogHTML,
   provisionalNoticeHTML,
+  settingsHTML,
 } from './views.js';
 import { flashAnzanHTML } from './flashAnzan.js';
 import { dailyHTML } from './daily.js';
@@ -26,6 +27,7 @@ import { sequenceToLabels } from '../keyboard/shortcuts.js';
 
 /** Full re-render. Used on init and reset. */
 export function renderApp(state) {
+  renderSettings(state);
   renderAppMode(state);
   set('skill-container',   skillSelectorHTML(state.progress, state.selectedSkillId));
   set('support-container', supportSelectorHTML(state.supportLevel));
@@ -37,6 +39,10 @@ export function renderApp(state) {
   renderFlashAnzan(state);
   renderDaily(state);
   renderAchievements(state);
+}
+
+export function renderSettings(state) {
+  set('settings-container', settingsHTML(state.settings));
 }
 
 export function renderAchievements(state) {

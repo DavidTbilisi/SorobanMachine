@@ -41,6 +41,10 @@ export function bindEvents(handlers, getState) {
     if (e.target.id === 'ch-challenge-back') { handlers.onChallengeBack();    return; }
     if (e.target.id === 'dc-challenge')      { handlers.onChallengeCreate();  return; }
 
+    // ── Settings toggles ─────────────────────────────────────────────────────
+    if (e.target.id === 'set-sound')    { handlers.onToggleSetting('sound');    return; }
+    if (e.target.id === 'set-confetti') { handlers.onToggleSetting('confetti'); return; }
+
     // ── Practice controls ────────────────────────────────────────────────────
     if (e.target.id === 'btn-submit') handlers.onSubmit();
     if (e.target.id === 'btn-next')   handlers.onNext();

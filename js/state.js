@@ -26,6 +26,7 @@ export function createInitialAppState() {
     achievements:     createInitialAchievementsState(),
     challenge:        createInitialChallengeState(),
     profile:          { name: null },
+    settings:         { soundOn: true, confettiOn: true },
   };
 }
 

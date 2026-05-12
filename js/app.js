@@ -33,6 +33,12 @@ import {
   createInitialChallengeState, serializableChallengeState,
   showInvitation, acceptChallenge, submitChallengeAnswer, dismissChallenge, buildChallengeBackUrl,
 } from './ui/challenge.js';
+import {
+  playClick, playTick, playSuccess, playFail, playWhoosh, playFanfare,
+  setSoundEnabled,
+} from './ui/sound.js';
+import { fireConfetti, setConfettiEnabled } from './ui/confetti.js';
+import { renderSettings } from './ui/render.js';
 
 let state = loadAppState() ?? createInitialAppState();
 
@@ -49,6 +55,11 @@ state.achievements    = state.achievements ?? createInitialAchievementsState();
 state.achievements.unlocked ??= {};
 state.challenge       = serializableChallengeState();
 state.profile         = state.profile ?? { name: null };
+state.settings        = state.settings ?? { soundOn: true, confettiOn: true };
+state.settings.soundOn    ??= true;
+state.settings.confettiOn ??= true;
+setSoundEnabled(state.settings.soundOn);
+setConfettiEnabled(state.settings.confettiOn);
 
 state.progress = migrateLockedToLearning(state.progress);
 state.progress = applyRustyDecay(state.progress);
@@ -87,10 +98,18 @@ function checkAchievements() {
   const next = { ...state.achievements.unlocked };
   for (const id of newly) next[id] = now;
   state.achievements = { ...state.achievements, unlocked: next };
+  let anyConfetti = false;
+  let anyFanfare = false;
   for (const id of newly) {
     const a = getAchievement(id);
-    if (a) showToast(`${a.icon} ${a.label} unlocked`, 2400);
+    if (a) {
+      showToast(`${a.icon} ${a.label} unlocked`, 2400);
+      if (a.confetti) anyConfetti = true;
+      if (a.fanfare)  anyFanfare  = true;
+    }
   }
+  if (anyConfetti) fireConfetti();
+  if (anyFanfare)  playFanfare();
   return newly;
 }
 
@@ -166,6 +185,8 @@ function onSubmit() {
   state.attemptLog.push(attempt);
   state.progress = updateProgress(state.progress, attempt);
 
+  if (attempt.correct) playSuccess(); else playFail();
+
   applyStatusTransitions();
   checkAchievements();
   persist();
@@ -188,6 +209,7 @@ function onNext() {
   state.lastAttempt       = null;
   state.inputSequence     = [];
   state.focusedCol        = 0;
+  playWhoosh();
   persist();
   renderExercise(state);
 }
@@ -238,6 +260,7 @@ function onToggleHints() {
 function onAddToken(token) {
   if (state.lastAttempt || !state.currentExercise) return;
   state.inputSequence = [...state.inputSequence, { ...token, col: state.focusedCol }];
+  playClick();
   renderSequencePanel(state);
 }
 
@@ -312,6 +335,8 @@ function onFlashStart(presetKey) {
 function onFlashSubmit() {
   const raw = document.getElementById('fa-answer')?.value ?? '';
   submitFlashAnswer(state, raw, () => {
+    const r = state.flashAnzan.lastResult;
+    if (r) (r.correct ? playSuccess : playFail)();
     checkAchievements();
     renderFlashAnzan(state);
     renderAchievements(state);
@@ -337,7 +362,22 @@ function onDailyStart() {
 
 function onDailySubmit() {
   const raw = document.getElementById('dc-answer')?.value ?? '';
+  const beforePhase = state.daily.phase;
+  const beforeIdx   = state.daily.idx;
   submitDailyAnswer(state, raw, () => {
+    // Per-problem sound: did the just-recorded answer pass?
+    const justAnswered = state.daily.perAnswer[beforeIdx];
+    if (justAnswered) (justAnswered.correct ? playSuccess : playFail)();
+
+    // If the run just finished perfect, celebrate once at the run level too.
+    if (beforePhase === 'playing' && state.daily.phase === 'result') {
+      const run = state.daily.results[state.daily.date];
+      if (run && run.correct === run.total) {
+        fireConfetti();
+        setTimeout(playFanfare, 300);
+      }
+    }
+
     checkAchievements();
     renderDaily(state);
     renderAchievements(state);
@@ -380,10 +420,27 @@ function onChallengeCreate() {
   copyText(url).then(ok => showToast(ok ? 'Challenge link copied — share it' : 'Copy failed', 2200));
 }
 
-function onChallengeAccept()  { acceptChallenge(state, () => renderChallenge(state)); }
+function onChallengeAccept()  {
+  playWhoosh();
+  acceptChallenge(state, () => renderChallenge(state));
+}
 function onChallengeSubmit() {
   const raw = document.getElementById('ch-answer')?.value ?? '';
-  submitChallengeAnswer(state, raw, () => renderChallenge(state));
+  const beforeIdx = state.challenge.idx;
+  submitChallengeAnswer(state, raw, () => {
+    const justAnswered = state.challenge.perAnswer[beforeIdx];
+    if (justAnswered) (justAnswered.correct ? playSuccess : playFail)();
+    if (state.challenge.phase === 'result' && state.challenge.myRun) {
+      const mine = state.challenge.myRun;
+      const them = state.challenge.source;
+      if (mine.correct > them.correct ||
+          (mine.correct === them.correct && mine.totalMs < them.totalMs)) {
+        fireConfetti();
+        setTimeout(playFanfare, 300);
+      }
+    }
+    renderChallenge(state);
+  });
 }
 function onChallengeDismiss() { dismissChallenge(state, () => renderChallenge(state)); }
 function onChallengeBack() {
@@ -395,6 +452,22 @@ function onChallengeBack() {
   const base = window.location.origin + window.location.pathname;
   const finalUrl = buildChallengeUrl(base, state.challenge.myRun, name);
   copyText(finalUrl).then(ok => showToast(ok ? 'Challenge-back link copied' : 'Copy failed', 2200));
+}
+
+// ── Settings toggle ──────────────────────────────────────────────────────────
+
+function onToggleSetting(key) {
+  if (key === 'sound') {
+    state.settings.soundOn = !state.settings.soundOn;
+    setSoundEnabled(state.settings.soundOn);
+    if (state.settings.soundOn) playClick();   // audible confirmation
+  } else if (key === 'confetti') {
+    state.settings.confettiOn = !state.settings.confettiOn;
+    setConfettiEnabled(state.settings.confettiOn);
+    if (state.settings.confettiOn) fireConfetti({ count: 40, duration: 1000 });
+  }
+  persist();
+  renderSettings(state);
 }
 
 // ── Share-card handler (Daily + Flash) ────────────────────────────────────────
@@ -431,6 +504,7 @@ bindEvents(
     onCertOpen, onCertClose, onCertPrint,
     onChallengeCreate, onChallengeAccept, onChallengeSubmit,
     onChallengeDismiss, onChallengeBack,
+    onToggleSetting,
   },
   () => state,
 );

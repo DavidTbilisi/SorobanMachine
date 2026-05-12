@@ -38,11 +38,11 @@ const CATALOG = [
     description: 'Master your first skill.',
     predicate: s => Object.values(s.progress ?? {}).some(p => p.status === STATUS.MASTERED) },
 
-  { id: 'complement_complete', label: 'Complement Champion', icon: '🪄', group: 'Practice',
+  { id: 'complement_complete', label: 'Complement Champion', icon: '🪄', group: 'Practice', confetti: true,
     description: 'Master all four complement skills (5± and 10±).',
     predicate: s => FIVE_COMP_IDS.every(id => mastered(s.progress, id)) },
 
-  { id: 'two_digit_pro', label: 'Two-Digit Pro', icon: '🔢', group: 'Practice',
+  { id: 'two_digit_pro', label: 'Two-Digit Pro', icon: '🔢', group: 'Practice', confetti: true,
     description: 'Master both 2-digit addition and 2-digit subtraction.',
     predicate: s => mastered(s.progress, SKILL_IDS.TWO_DIGIT_ADD) && mastered(s.progress, SKILL_IDS.TWO_DIGIT_SUBTRACT) },
 
@@ -53,7 +53,7 @@ const CATALOG = [
       return !!p && p.attempts >= 40 && p.avgLatencyMs > 0 && p.avgLatencyMs < 1000;
     } },
 
-  { id: 'pilot', label: 'Soroban Pilot', icon: '🏆', group: 'Practice',
+  { id: 'pilot', label: 'Soroban Pilot', icon: '🏆', group: 'Practice', confetti: true, fanfare: true,
     description: 'Master all 14 skills. Unlocks the Pilot Certificate.',
     predicate: s => Object.values(SKILL_IDS).every(id => mastered(s.progress, id)) },
 
@@ -61,7 +61,7 @@ const CATALOG = [
     description: 'Complete one Daily Challenge.',
     predicate: s => Object.keys(s.daily?.results ?? {}).length >= 1 },
 
-  { id: 'perfect_daily', label: 'Perfect Ten', icon: '💯', group: 'Daily',
+  { id: 'perfect_daily', label: 'Perfect Ten', icon: '💯', group: 'Daily', confetti: true,
     description: 'Score 10 / 10 on a Daily Challenge.',
     predicate: s => Object.values(s.daily?.results ?? {}).some(r => r.correct === r.total) },
 
@@ -69,11 +69,11 @@ const CATALOG = [
     description: 'Reach a 3-day Daily streak.',
     predicate: s => computeStreak(s.daily?.results ?? {}, dateKey()).longest >= 3 },
 
-  { id: 'streak_7', label: 'Week One', icon: '🔥🔥', group: 'Daily',
+  { id: 'streak_7', label: 'Week One', icon: '🔥🔥', group: 'Daily', confetti: true,
     description: 'Reach a 7-day Daily streak.',
     predicate: s => computeStreak(s.daily?.results ?? {}, dateKey()).longest >= 7 },
 
-  { id: 'streak_30', label: 'Month Strong', icon: '🔥🔥🔥', group: 'Daily',
+  { id: 'streak_30', label: 'Month Strong', icon: '🔥🔥🔥', group: 'Daily', confetti: true, fanfare: true,
     description: 'Reach a 30-day Daily streak.',
     predicate: s => computeStreak(s.daily?.results ?? {}, dateKey()).longest >= 30 },
 
@@ -81,7 +81,7 @@ const CATALOG = [
     description: 'Get a Hard Flash Anzan round correct.',
     predicate: s => (s.flashAnzan?.stats?.hard?.correct ?? 0) >= 1 },
 
-  { id: 'flash_extreme', label: 'Anzan Master', icon: '🚀', group: 'Flash Anzan',
+  { id: 'flash_extreme', label: 'Anzan Master', icon: '🚀', group: 'Flash Anzan', confetti: true,
     description: 'Get an Extreme Flash Anzan round correct.',
     predicate: s => (s.flashAnzan?.stats?.extreme?.correct ?? 0) >= 1 },
 ];
