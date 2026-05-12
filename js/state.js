@@ -3,6 +3,7 @@ import { createInitialProgress } from './trainer/progress.js';
 import { createInitialFlashAnzanState } from './ui/flashAnzan.js';
 import { createInitialDailyState } from './ui/daily.js';
 import { createInitialAchievementsState } from './trainer/achievements.js';
+import { createInitialChallengeState } from './ui/challenge.js';
 
 /** @returns {Object} fresh app state */
 export function createInitialAppState() {
@@ -23,6 +24,8 @@ export function createInitialAppState() {
     flashAnzan:       createInitialFlashAnzanState(),
     daily:            createInitialDailyState(),
     achievements:     createInitialAchievementsState(),
+    challenge:        createInitialChallengeState(),
+    profile:          { name: null },
   };
 }
 

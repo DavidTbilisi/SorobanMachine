@@ -18,6 +18,7 @@ import {
 import { flashAnzanHTML } from './flashAnzan.js';
 import { dailyHTML } from './daily.js';
 import { achievementsHTML, certificateHTML } from './achievements.js';
+import { challengeHTML } from './challenge.js';
 import { applyOperation } from '../engine/operations.js';
 import { applyMultiColumnOperation } from '../engine/multicolumn.js';
 import { isMentalOnlySkill } from '../trainer/exercises.js';
@@ -53,6 +54,17 @@ export function closeCertificate() {
   const modal = document.getElementById('cert-modal');
   if (modal) modal.hidden = true;
   document.body.classList.remove('cert-open');
+}
+
+export function renderChallenge(state) {
+  const phase = state.challenge?.phase ?? 'idle';
+  const modal = document.getElementById('challenge-modal');
+  const active = phase === 'invitation' || phase === 'playing' || phase === 'result';
+  set('challenge-content', active ? challengeHTML(state.challenge) : '');
+  if (modal) modal.hidden = !active;
+  if (active) document.body.classList.add('challenge-open');
+  else        document.body.classList.remove('challenge-open');
+  if (phase === 'playing')  document.getElementById('ch-answer')?.focus();
 }
 
 /** Toggle visibility of the practice / flash anzan / daily layouts and render the tabs. */

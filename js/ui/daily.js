@@ -122,7 +122,8 @@ function resultHTML(daily) {
     </div>
     <div class="dc-btn-row">
       <button data-share="daily" class="dc-btn">📋 Share result</button>
-      <button id="dc-back" class="dc-btn dc-btn-primary">Done</button>
+      <button id="dc-challenge" class="dc-btn dc-btn-primary">🎯 Challenge a friend</button>
+      <button id="dc-back" class="dc-btn">Done</button>
     </div>
   </div>`;
 }

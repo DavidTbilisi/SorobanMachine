@@ -285,6 +285,39 @@ test('evaluateAnswerNumeric records capped latency on a long pause', () => {
   assertEq(att.latencyMs, cfg.LATENCY_PAUSE_CAP_MS);
 });
 
+// ── Friend-challenge URL encoding ───────────────────────────────────────────
+
+const chMod = await import('../js/trainer/challenge.js');
+
+test('buildChallengeUrl + parseChallengeHash round-trip', () => {
+  const run = { date: '2026-05-12', correct: 8, total: 10, totalMs: 84000 };
+  const url = chMod.buildChallengeUrl('https://example.test/', run, 'David');
+  assert(url.startsWith('https://example.test/#challenge?'));
+  const hash = url.substring(url.indexOf('#'));
+  const parsed = chMod.parseChallengeHash(hash);
+  assertEq(parsed, { date: '2026-05-12', correct: 8, total: 10, totalMs: 84000, name: 'David' });
+});
+
+test('parseChallengeHash rejects malformed input', () => {
+  assert(chMod.parseChallengeHash('') === null);
+  assert(chMod.parseChallengeHash('#foo') === null);
+  assert(chMod.parseChallengeHash('#challenge?d=bad') === null);
+  // Out-of-range correct
+  assert(chMod.parseChallengeHash('#challenge?d=2026-05-12&s=99&t=10&ms=1000') === null);
+});
+
+test('parseChallengeHash defaults name when omitted', () => {
+  const p = chMod.parseChallengeHash('#challenge?d=2026-05-12&s=5&t=10&ms=30000');
+  assertEq(p.name, 'A friend');
+});
+
+test('compareRuns picks higher score, then faster time', () => {
+  assertEq(chMod.compareRuns({correct:9,totalMs:60000}, {correct:8,totalMs:60000}), 'me');
+  assertEq(chMod.compareRuns({correct:8,totalMs:60000}, {correct:9,totalMs:60000}), 'them');
+  assertEq(chMod.compareRuns({correct:8,totalMs:50000}, {correct:8,totalMs:60000}), 'me');
+  assertEq(chMod.compareRuns({correct:8,totalMs:60000}, {correct:8,totalMs:60000}), 'tie');
+});
+
 // ── Run ──────────────────────────────────────────────────────────────────────
 
 let passed = 0, failed = 0;

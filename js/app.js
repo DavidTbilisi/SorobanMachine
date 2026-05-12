@@ -11,7 +11,7 @@ import {
   renderApp, renderAfterSubmit, renderExercise,
   renderDashboard, renderAttemptLog, renderSequencePanel, renderFocusedCol,
   renderSkillTree, renderViz, renderAppMode, renderFlashAnzan, renderDaily,
-  renderAchievements, openCertificate, closeCertificate,
+  renderAchievements, openCertificate, closeCertificate, renderChallenge,
 } from './ui/render.js';
 import { bindEvents } from './ui/events.js';
 import {
@@ -28,6 +28,11 @@ import { copyText, showToast } from './ui/clipboard.js';
 import {
   evaluateNewAchievements, getAchievement, createInitialAchievementsState,
 } from './trainer/achievements.js';
+import { parseChallengeHash, buildChallengeUrl } from './trainer/challenge.js';
+import {
+  createInitialChallengeState, serializableChallengeState,
+  showInvitation, acceptChallenge, submitChallengeAnswer, dismissChallenge, buildChallengeBackUrl,
+} from './ui/challenge.js';
 
 let state = loadAppState() ?? createInitialAppState();
 
@@ -42,6 +47,8 @@ state.flashAnzan      = serializableFlashAnzanState(state.flashAnzan ?? createIn
 state.daily           = serializableDailyState(state.daily ?? createInitialDailyState());
 state.achievements    = state.achievements ?? createInitialAchievementsState();
 state.achievements.unlocked ??= {};
+state.challenge       = serializableChallengeState();
+state.profile         = state.profile ?? { name: null };
 
 state.progress = migrateLockedToLearning(state.progress);
 state.progress = applyRustyDecay(state.progress);
@@ -65,6 +72,7 @@ function persist() {
     ...state,
     flashAnzan: serializableFlashAnzanState(state.flashAnzan),
     daily:      serializableDailyState(state.daily),
+    challenge:  serializableChallengeState(),
   });
 }
 
@@ -348,6 +356,47 @@ function onCertOpen()  { openCertificate(state); }
 function onCertClose() { closeCertificate(); }
 function onCertPrint() { window.print(); }
 
+// ── Friend Challenge handlers ────────────────────────────────────────────────
+
+function ensureProfileName() {
+  if (state.profile?.name?.trim()) return state.profile.name.trim();
+  const raw = window.prompt('Your name (shown to your friend):', '');
+  const name = (raw ?? '').trim().slice(0, 30);
+  if (name) {
+    state.profile = { ...state.profile, name };
+    persist();
+    return name;
+  }
+  return null;
+}
+
+function onChallengeCreate() {
+  const run = state.daily.results?.[state.daily.date];
+  if (!run) { showToast('Finish a daily first', 1800); return; }
+  const name = ensureProfileName();
+  if (!name) return;
+  const base = window.location.origin + window.location.pathname;
+  const url  = buildChallengeUrl(base, run, name);
+  copyText(url).then(ok => showToast(ok ? 'Challenge link copied — share it' : 'Copy failed', 2200));
+}
+
+function onChallengeAccept()  { acceptChallenge(state, () => renderChallenge(state)); }
+function onChallengeSubmit() {
+  const raw = document.getElementById('ch-answer')?.value ?? '';
+  submitChallengeAnswer(state, raw, () => renderChallenge(state));
+}
+function onChallengeDismiss() { dismissChallenge(state, () => renderChallenge(state)); }
+function onChallengeBack() {
+  const url = buildChallengeBackUrl(state);
+  if (!url) return;
+  const name = ensureProfileName();
+  if (!name) return;
+  // Rebuild with the (possibly newly entered) name.
+  const base = window.location.origin + window.location.pathname;
+  const finalUrl = buildChallengeUrl(base, state.challenge.myRun, name);
+  copyText(finalUrl).then(ok => showToast(ok ? 'Challenge-back link copied' : 'Copy failed', 2200));
+}
+
 // ── Share-card handler (Daily + Flash) ────────────────────────────────────────
 
 function onShare(kind) {
@@ -380,8 +429,19 @@ bindEvents(
     onDailyStart, onDailySubmit, onDailyBack,
     onShare,
     onCertOpen, onCertClose, onCertPrint,
+    onChallengeCreate, onChallengeAccept, onChallengeSubmit,
+    onChallengeDismiss, onChallengeBack,
   },
   () => state,
 );
 
 renderApp(state);
+
+// ── Friend-challenge hash parsing ─────────────────────────────────────────────
+// If this page was opened with a #challenge?… hash, surface the invitation
+// modal over whatever tab the recipient happens to be on.
+(function maybeShowChallengeInvite() {
+  const parsed = parseChallengeHash(window.location.hash);
+  if (!parsed) return;
+  showInvitation(state, parsed, () => renderChallenge(state));
+})();

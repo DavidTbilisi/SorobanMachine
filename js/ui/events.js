@@ -34,6 +34,13 @@ export function bindEvents(handlers, getState) {
     if (e.target.id === 'cert-print') { handlers.onCertPrint(); return; }
     if (e.target.classList?.contains('cert-backdrop')) { handlers.onCertClose(); return; }
 
+    // ── Friend challenge ─────────────────────────────────────────────────────
+    if (e.target.id === 'ch-accept')         { handlers.onChallengeAccept();  return; }
+    if (e.target.id === 'ch-submit')         { handlers.onChallengeSubmit();  return; }
+    if (e.target.id === 'ch-dismiss')        { handlers.onChallengeDismiss(); return; }
+    if (e.target.id === 'ch-challenge-back') { handlers.onChallengeBack();    return; }
+    if (e.target.id === 'dc-challenge')      { handlers.onChallengeCreate();  return; }
+
     // ── Practice controls ────────────────────────────────────────────────────
     if (e.target.id === 'btn-submit') handlers.onSubmit();
     if (e.target.id === 'btn-next')   handlers.onNext();
@@ -55,6 +62,15 @@ export function bindEvents(handlers, getState) {
 
   document.addEventListener('keydown', e => {
     const state = getState();
+
+    // ── Friend-challenge modal key handling (when active) ────────────────────
+    const chPhase = state.challenge?.phase;
+    if (chPhase === 'invitation' || chPhase === 'playing' || chPhase === 'result') {
+      if (e.key === 'Escape')                            { e.preventDefault(); handlers.onChallengeDismiss(); return; }
+      if (chPhase === 'invitation' && e.key === 'Enter') { e.preventDefault(); handlers.onChallengeAccept();  return; }
+      if (chPhase === 'playing'    && e.key === 'Enter') { e.preventDefault(); handlers.onChallengeSubmit();  return; }
+      return;
+    }
 
     // ── Daily challenge key handling (when active) ───────────────────────────
     if (state.appMode === 'daily') {
