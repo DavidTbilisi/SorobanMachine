@@ -108,6 +108,7 @@ export function applyRustyDecay(progress) {
   const updated = { ...progress };
   for (const id of Object.values(SKILL_IDS)) {
     const p = updated[id];
+    if (!p) continue;  // defensive — partial saved state may be missing a skill
     if (p.status === STATUS.MASTERED && p.lastPracticedAt) {
       const elapsed = now - new Date(p.lastPracticedAt).getTime();
       if (elapsed >= RUSTY_THRESHOLD_MS) {

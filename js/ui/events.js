@@ -45,6 +45,22 @@ export function bindEvents(handlers, getState) {
     if (e.target.id === 'set-sound')    { handlers.onToggleSetting('sound');    return; }
     if (e.target.id === 'set-confetti') { handlers.onToggleSetting('confetti'); return; }
 
+    // ── Placement / Tutorial launchers ───────────────────────────────────────
+    if (e.target.id === 'open-tutorial')  { handlers.onOpenTutorial();  return; }
+    if (e.target.id === 'open-placement') { handlers.onOpenPlacement(); return; }
+
+    // ── Placement modal controls ─────────────────────────────────────────────
+    if (e.target.id === 'pl-start')    { handlers.onPlacementStart();    return; }
+    if (e.target.id === 'pl-submit')   { handlers.onPlacementSubmit();   return; }
+    if (e.target.id === 'pl-dismiss')  { handlers.onPlacementDismiss();  return; }
+    if (e.target.id === 'pl-jump')     { handlers.onPlacementJump();     return; }
+
+    // ── Tutorial modal controls ──────────────────────────────────────────────
+    if (e.target.id === 'tu-next')     { handlers.onTutorialNext();     return; }
+    if (e.target.id === 'tu-prev')     { handlers.onTutorialPrev();     return; }
+    if (e.target.id === 'tu-finish')   { handlers.onTutorialFinish();   return; }
+    if (e.target.id === 'tu-dismiss')  { handlers.onTutorialDismiss();  return; }
+
     // ── Practice controls ────────────────────────────────────────────────────
     if (e.target.id === 'btn-submit') handlers.onSubmit();
     if (e.target.id === 'btn-next')   handlers.onNext();
@@ -66,6 +82,23 @@ export function bindEvents(handlers, getState) {
 
   document.addEventListener('keydown', e => {
     const state = getState();
+
+    // ── Tutorial modal key handling ──────────────────────────────────────────
+    if (state.tutorial?.phase === 'playing') {
+      if (e.key === 'Escape')      { e.preventDefault(); handlers.onTutorialDismiss(); return; }
+      if (e.key === 'ArrowRight' || e.key === 'Enter') { e.preventDefault(); handlers.onTutorialNext(); return; }
+      if (e.key === 'ArrowLeft')   { e.preventDefault(); handlers.onTutorialPrev();   return; }
+      return;
+    }
+
+    // ── Placement modal key handling ─────────────────────────────────────────
+    const plPhase = state.placement?.phase;
+    if (plPhase === 'invitation' || plPhase === 'playing' || plPhase === 'result') {
+      if (e.key === 'Escape')                           { e.preventDefault(); handlers.onPlacementDismiss(); return; }
+      if (plPhase === 'invitation' && e.key === 'Enter'){ e.preventDefault(); handlers.onPlacementStart();   return; }
+      if (plPhase === 'playing'    && e.key === 'Enter'){ e.preventDefault(); handlers.onPlacementSubmit();  return; }
+      return;
+    }
 
     // ── Friend-challenge modal key handling (when active) ────────────────────
     const chPhase = state.challenge?.phase;

@@ -17,13 +17,16 @@ export function computeAnswer(promptText) {
 
 /**
  * Seed localStorage with the app's persistence key. Call BEFORE page.reload().
+ * Marks firstVisitAt so the onboarding tutorial doesn't auto-open and shadow
+ * the test's target UI — explicit tutorial tests can override.
  * @param {import('@playwright/test').Page} page
  * @param {Object} state
  */
 export async function seedAppState(page, state) {
+  const withDefaults = { firstVisitAt: Date.now(), ...state };
   await page.evaluate((s) => {
     localStorage.setItem('soroban_vm_poc', JSON.stringify(s));
-  }, state);
+  }, withDefaults);
 }
 
 /** Read current persisted state. */
@@ -34,8 +37,22 @@ export async function readAppState(page) {
   });
 }
 
-/** Clear localStorage before each test so they start clean. */
+/**
+ * Clear localStorage before each test so they start clean — but pre-mark
+ * firstVisitAt so the onboarding tutorial doesn't auto-open over the test.
+ * Tutorial tests opt out via firstVisitLoad().
+ */
 export async function freshLoad(page) {
+  await page.goto('/');
+  await page.evaluate(() => {
+    localStorage.clear();
+    localStorage.setItem('soroban_vm_poc', JSON.stringify({ firstVisitAt: Date.now() }));
+  });
+  await page.reload();
+}
+
+/** Truly-first-visit load: empty localStorage, no firstVisitAt marker. */
+export async function firstVisitLoad(page) {
   await page.goto('/');
   await page.evaluate(() => localStorage.clear());
   await page.reload();

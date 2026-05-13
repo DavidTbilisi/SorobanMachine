@@ -4,6 +4,8 @@ import { createInitialFlashAnzanState } from './ui/flashAnzan.js';
 import { createInitialDailyState } from './ui/daily.js';
 import { createInitialAchievementsState } from './trainer/achievements.js';
 import { createInitialChallengeState } from './ui/challenge.js';
+import { createInitialPlacementState } from './ui/placement.js';
+import { createInitialTutorialState }  from './ui/tutorial.js';
 
 /** @returns {Object} fresh app state */
 export function createInitialAppState() {
@@ -25,8 +27,11 @@ export function createInitialAppState() {
     daily:            createInitialDailyState(),
     achievements:     createInitialAchievementsState(),
     challenge:        createInitialChallengeState(),
+    placement:        createInitialPlacementState(),
+    tutorial:         createInitialTutorialState(),
     profile:          { name: null },
     settings:         { soundOn: true, confettiOn: true },
+    firstVisitAt:     null,
   };
 }
 

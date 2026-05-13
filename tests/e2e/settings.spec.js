@@ -42,6 +42,7 @@ test.describe('Settings (sound + confetti)', () => {
         appMode: 'practice',
         selectedSkillId: 'direct_add_1_4',
         supportLevel: 3,
+        firstVisitAt: Date.now(),
         progress: Object.fromEntries([
           'direct_add_1_4','direct_subtract_1_4',
           'five_complement_add','five_complement_subtract',

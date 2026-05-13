@@ -35,6 +35,18 @@ export function formatDailyShare(run, currentStreak) {
 }
 
 /**
+ * @param {{tier:string, icon:string, correct:number, total:number, message:string}} result
+ * @returns {string}
+ */
+export function formatPlacementShare(result) {
+  return [
+    `🧮 Soroban Machine — Placement`,
+    `${result.icon} ${result.tier} · ${result.correct}/${result.total}`,
+    result.message,
+  ].join('\n');
+}
+
+/**
  * @param {string} presetLabel
  * @param {{count:number, digits:number, speedMs:number}} config
  * @param {{correct:boolean, parsed:(number|null), expected:number}} lastResult

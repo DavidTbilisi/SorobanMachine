@@ -13,6 +13,8 @@ export function settingsHTML(settings) {
   const sound    = settings?.soundOn !== false;
   const confetti = settings?.confettiOn !== false;
   return `
+    <button class="settings-toggle" id="open-tutorial"  title="Tutorial: what is a soroban?">❓</button>
+    <button class="settings-toggle" id="open-placement" title="Placement test: where should I start?">🎓</button>
     <button class="settings-toggle" id="set-sound"    aria-pressed="${sound}"
             title="Toggle sound effects">${sound    ? '🔊' : '🔇'}</button>
     <button class="settings-toggle" id="set-confetti" aria-pressed="${confetti}"

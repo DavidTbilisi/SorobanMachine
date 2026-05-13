@@ -318,6 +318,51 @@ test('compareRuns picks higher score, then faster time', () => {
   assertEq(chMod.compareRuns({correct:8,totalMs:60000}, {correct:8,totalMs:60000}), 'tie');
 });
 
+// ── Placement test ──────────────────────────────────────────────────────────
+
+const plMod = await import('../js/trainer/placement.js');
+const scMod2 = await import('../js/trainer/shareCard.js');
+
+test('buildPlacementProblems: 10 problems with correct expectedResults', () => {
+  const probs = plMod.buildPlacementProblems();
+  assertEq(probs.length, 10);
+  for (const p of probs) {
+    const computed = p.direction === 'add' ? p.startValue + p.amount : p.startValue - p.amount;
+    assertEq(p.expectedResult, computed, p.prompt);
+    assert(p.id.startsWith('placement_'));
+    assert(p.band, 'missing band on ' + p.id);
+  }
+});
+
+test('classifyPlacement: tiers map to correct counts', () => {
+  const ten = arr => arr.map(ok => ({ correct: !!ok }));
+  assertEq(plMod.classifyPlacement(ten([1,0,0,0,0,0,0,0,0,0])).tier, 'Learner');
+  assertEq(plMod.classifyPlacement(ten([1,1,1,1,0,0,0,0,0,0])).tier, 'Learner');
+  assertEq(plMod.classifyPlacement(ten([1,1,1,1,1,0,0,0,0,0])).tier, 'Operator');
+  assertEq(plMod.classifyPlacement(ten([1,1,1,1,1,1,1,0,0,0])).tier, 'Operator');
+  assertEq(plMod.classifyPlacement(ten([1,1,1,1,1,1,1,1,0,0])).tier, 'Pilot');
+  assertEq(plMod.classifyPlacement(ten([1,1,1,1,1,1,1,1,1,1])).tier, 'Pilot');
+});
+
+test('classifyPlacement: byBand counts correct/total per band', () => {
+  const probs = plMod.buildPlacementProblems();
+  // Half correct, all in the first half (Direct + 5-comp + first 10-comp)
+  const perAnswer = probs.map((_, i) => ({ correct: i < 5 }));
+  const r = plMod.classifyPlacement(perAnswer);
+  assertEq(r.byBand.Direct,         { correct: 2, total: 2 });
+  assertEq(r.byBand['5-complement'], { correct: 2, total: 2 });
+  assertEq(r.byBand['10-complement'], { correct: 1, total: 2 });
+  assertEq(r.byBand['Two-digit'],   { correct: 0, total: 2 });
+});
+
+test('formatPlacementShare produces expected string', () => {
+  const result = { tier: 'Operator', icon: '🎓', correct: 6, total: 10, message: 'foo' };
+  const out = scMod2.formatPlacementShare(result);
+  assert(out.includes('Soroban Machine — Placement'));
+  assert(out.includes('🎓 Operator · 6/10'));
+  assert(out.includes('foo'));
+});
+
 // ── Run ──────────────────────────────────────────────────────────────────────
 
 let passed = 0, failed = 0;

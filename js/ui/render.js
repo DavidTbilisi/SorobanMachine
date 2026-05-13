@@ -20,6 +20,8 @@ import { flashAnzanHTML } from './flashAnzan.js';
 import { dailyHTML } from './daily.js';
 import { achievementsHTML, certificateHTML } from './achievements.js';
 import { challengeHTML } from './challenge.js';
+import { placementHTML } from './placement.js';
+import { tutorialHTML }  from './tutorial.js';
 import { applyOperation } from '../engine/operations.js';
 import { applyMultiColumnOperation } from '../engine/multicolumn.js';
 import { isMentalOnlySkill } from '../trainer/exercises.js';
@@ -39,6 +41,8 @@ export function renderApp(state) {
   renderFlashAnzan(state);
   renderDaily(state);
   renderAchievements(state);
+  renderPlacement(state);
+  renderTutorial(state);
 }
 
 export function renderSettings(state) {
@@ -71,6 +75,23 @@ export function renderChallenge(state) {
   if (active) document.body.classList.add('challenge-open');
   else        document.body.classList.remove('challenge-open');
   if (phase === 'playing')  document.getElementById('ch-answer')?.focus();
+}
+
+export function renderPlacement(state) {
+  const phase = state.placement?.phase ?? 'idle';
+  const modal = document.getElementById('placement-modal');
+  const active = phase === 'invitation' || phase === 'playing' || phase === 'result';
+  set('placement-content', active ? placementHTML(state.placement) : '');
+  if (modal) modal.hidden = !active;
+  if (phase === 'playing') document.getElementById('pl-answer')?.focus();
+}
+
+export function renderTutorial(state) {
+  const phase = state.tutorial?.phase ?? 'idle';
+  const modal = document.getElementById('tutorial-modal');
+  const active = phase === 'playing';
+  set('tutorial-content', active ? tutorialHTML(state.tutorial) : '');
+  if (modal) modal.hidden = !active;
 }
 
 /** Toggle visibility of the practice / flash anzan / daily layouts and render the tabs. */

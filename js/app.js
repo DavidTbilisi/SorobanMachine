@@ -2,7 +2,7 @@ import { createInitialAppState, resetAppState } from './state.js';
 import { loadAppState, saveAppState, clearAppState } from './storage.js';
 import { generateExercise, isMentalOnlySkill } from './trainer/exercises.js';
 import { evaluateAnswerNumeric, evaluateAnswerSequence } from './trainer/scoring.js';
-import { updateProgress, unlockEligibleSkills, applyRustyDecay, migrateLockedToLearning } from './trainer/progress.js';
+import { updateProgress, unlockEligibleSkills, applyRustyDecay, migrateLockedToLearning, createInitialProgress } from './trainer/progress.js';
 import { canMasterSkill } from './trainer/gates.js';
 import { STATUS, PROVISIONAL_HOLD_MS } from './config.js';
 import { applyOperation } from './engine/operations.js';
@@ -23,7 +23,7 @@ import {
   startDailyRun, submitDailyAnswer, backToDailyIdle,
 } from './ui/daily.js';
 import { computeStreak } from './trainer/daily.js';
-import { formatDailyShare, formatFlashShare } from './trainer/shareCard.js';
+import { formatDailyShare, formatFlashShare, formatPlacementShare } from './trainer/shareCard.js';
 import { copyText, showToast } from './ui/clipboard.js';
 import {
   evaluateNewAchievements, getAchievement, createInitialAchievementsState,
@@ -38,29 +38,39 @@ import {
   setSoundEnabled,
 } from './ui/sound.js';
 import { fireConfetti, setConfettiEnabled } from './ui/confetti.js';
-import { renderSettings } from './ui/render.js';
+import { renderSettings, renderPlacement, renderTutorial } from './ui/render.js';
+import {
+  createInitialPlacementState, serializablePlacementState,
+  showPlacementInvitation, startPlacement, submitPlacementAnswer, dismissPlacement,
+} from './ui/placement.js';
+import {
+  createInitialTutorialState, serializableTutorialState,
+  openTutorial, nextTutorialStep, prevTutorialStep, dismissTutorial,
+} from './ui/tutorial.js';
 
-let state = loadAppState() ?? createInitialAppState();
+// Always start from a full default state, then layer the saved values on top.
+// Any field missing from the saved blob (corrupted localStorage, test seeds
+// that only set a few keys, schema additions) keeps its default.
+let state = { ...createInitialAppState(), ...(loadAppState() ?? {}) };
 
-// Hydrate fields that may be missing from a saved state
-state.appMode       ??= 'practice';
-state.inputMode     ??= 'command';
-state.inputSequence ??= [];
-state.hintsVisible  ??= true;
-state.focusedCol    ??= 0;
-state.vizMode       ??= 'grid';
-state.flashAnzan      = serializableFlashAnzanState(state.flashAnzan ?? createInitialFlashAnzanState());
-state.daily           = serializableDailyState(state.daily ?? createInitialDailyState());
-state.achievements    = state.achievements ?? createInitialAchievementsState();
+// Strip non-serializable runtime sub-states (timers, in-flight phases) and
+// fill in nested defaults that the shallow merge above can't reach.
+state.flashAnzan   = serializableFlashAnzanState(state.flashAnzan);
+state.daily        = serializableDailyState(state.daily);
+state.challenge    = serializableChallengeState();
+state.placement    = serializablePlacementState(state.placement);
+state.tutorial     = serializableTutorialState(state.tutorial);
+state.achievements = state.achievements ?? createInitialAchievementsState();
 state.achievements.unlocked ??= {};
-state.challenge       = serializableChallengeState();
-state.profile         = state.profile ?? { name: null };
-state.settings        = state.settings ?? { soundOn: true, confettiOn: true };
 state.settings.soundOn    ??= true;
 state.settings.confettiOn ??= true;
+state.profile      = state.profile ?? { name: null };
+
 setSoundEnabled(state.settings.soundOn);
 setConfettiEnabled(state.settings.confettiOn);
 
+// Progress: merge per-skill so saved-but-incomplete state is filled out.
+state.progress = { ...createInitialProgress(), ...(state.progress ?? {}) };
 state.progress = migrateLockedToLearning(state.progress);
 state.progress = applyRustyDecay(state.progress);
 
@@ -84,6 +94,8 @@ function persist() {
     flashAnzan: serializableFlashAnzanState(state.flashAnzan),
     daily:      serializableDailyState(state.daily),
     challenge:  serializableChallengeState(),
+    placement:  serializablePlacementState(state.placement),
+    tutorial:   serializableTutorialState(state.tutorial),
   });
 }
 
@@ -454,6 +466,62 @@ function onChallengeBack() {
   copyText(finalUrl).then(ok => showToast(ok ? 'Challenge-back link copied' : 'Copy failed', 2200));
 }
 
+// ── Placement test handlers ──────────────────────────────────────────────────
+
+function onOpenPlacement()    { showPlacementInvitation(state, () => renderPlacement(state)); }
+function onPlacementStart()   {
+  playWhoosh();
+  startPlacement(state, () => renderPlacement(state));
+}
+function onPlacementSubmit() {
+  const raw = document.getElementById('pl-answer')?.value ?? '';
+  const beforeIdx = state.placement.idx;
+  submitPlacementAnswer(state, raw, () => {
+    const just = state.placement.perAnswer[beforeIdx];
+    if (just) (just.correct ? playSuccess : playFail)();
+    if (state.placement.phase === 'result' && state.placement.result?.tier === 'Pilot') {
+      fireConfetti();
+      setTimeout(playFanfare, 250);
+    }
+    renderPlacement(state);
+    persist();
+  });
+}
+function onPlacementDismiss() { dismissPlacement(state, () => renderPlacement(state)); persist(); }
+function onPlacementJump() {
+  const sug = state.placement.result?.suggestion;
+  if (!sug) return;
+  state.appMode        = 'practice';
+  state.selectedSkillId = sug;
+  state.currentExercise = null;
+  state.lastAttempt     = null;
+  state.inputSequence   = [];
+  dismissPlacement(state, () => renderPlacement(state));
+  persist();
+  renderAppMode(state);
+  renderSkillTree(state);
+  renderExercise(state);
+}
+
+// ── Tutorial handlers ────────────────────────────────────────────────────────
+
+function onOpenTutorial()     { openTutorial(state, () => renderTutorial(state)); }
+function onTutorialNext()     { nextTutorialStep(state, () => renderTutorial(state)); }
+function onTutorialPrev()     { prevTutorialStep(state, () => renderTutorial(state)); }
+function onTutorialDismiss()  {
+  dismissTutorial(state, () => renderTutorial(state));
+  persist();
+}
+function onTutorialFinish() {
+  state.appMode         = 'practice';
+  state.selectedSkillId = 'direct_add_1_4';
+  dismissTutorial(state, () => renderTutorial(state));
+  persist();
+  renderAppMode(state);
+  renderSkillTree(state);
+  renderExercise(state);
+}
+
 // ── Settings toggle ──────────────────────────────────────────────────────────
 
 function onToggleSetting(key) {
@@ -484,6 +552,10 @@ function onShare(kind) {
     if (!fa?.lastResult || !fa?.config) return;
     const stats = fa.stats?.[fa.presetKey] ?? { played: 0, correct: 0, bestStreak: 0 };
     text = formatFlashShare(fa.config.label, fa.config, fa.lastResult, stats);
+  } else if (kind === 'placement') {
+    const r = state.placement?.result;
+    if (!r) return;
+    text = formatPlacementShare(r);
   }
   if (!text) return;
   copyText(text).then(ok => showToast(ok ? 'Copied to clipboard' : 'Copy failed'));
@@ -505,6 +577,8 @@ bindEvents(
     onChallengeCreate, onChallengeAccept, onChallengeSubmit,
     onChallengeDismiss, onChallengeBack,
     onToggleSetting,
+    onOpenPlacement, onPlacementStart, onPlacementSubmit, onPlacementDismiss, onPlacementJump,
+    onOpenTutorial,  onTutorialNext,    onTutorialPrev,    onTutorialDismiss, onTutorialFinish,
   },
   () => state,
 );
@@ -518,4 +592,15 @@ renderApp(state);
   const parsed = parseChallengeHash(window.location.hash);
   if (!parsed) return;
   showInvitation(state, parsed, () => renderChallenge(state));
+})();
+
+// ── First-visit auto-show of tutorial ────────────────────────────────────────
+// No challenge invite hijacking the screen + no prior activity → onboard them.
+(function maybeAutoOpenTutorial() {
+  if (state.firstVisitAt) return;
+  state.firstVisitAt = Date.now();
+  // Don't show on top of a challenge invitation.
+  if (state.challenge?.phase === 'invitation') { persist(); return; }
+  openTutorial(state, () => renderTutorial(state));
+  persist();
 })();
