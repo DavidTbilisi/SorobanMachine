@@ -6,3 +6,4 @@ playwright-report/
 playwright/.cache/
 .env
 .env.local
+.wiki-staging/
